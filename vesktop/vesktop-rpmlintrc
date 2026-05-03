@@ -1,0 +1,4 @@
+addFilter("filelist-forbidden-opt")
+addFilter("binary-or-shlib-defines-rpath")
+addFilter("explicit-lib-dependency")
+addFilter("dir-or-file-outside-snapshot")
