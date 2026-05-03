@@ -14,10 +14,11 @@ Source0:        https://github.com/Vencord/Vesktop/releases/download/v1.6.5/vesk
 
 ExclusiveArch:  x86_64
 
-# Required to unpack the upstream RPM natively
+
 BuildRequires:  cpio
 
-# Explicit dependencies mapped from Fedora to openSUSE Tumbleweed
+BuildRequires:  hicolor-icon-theme
+
 Requires:       gtk3
 Requires:       libnotify4
 Requires:       mozilla-nss
@@ -30,6 +31,7 @@ Requires:       libsecret-1-0
 Requires:       libgbm1
 Requires:       libasound2
 Requires:       libappindicator3-1
+Requires:       hicolor-icon-theme
 
 Provides:       vencorddesktop = %{version}-%{release}
 Provides:       vesktop = %{version}-%{release}
@@ -80,6 +82,8 @@ export NO_BRP_CHECK_RPATH=true
 %{_datadir}/applications/*.desktop
 %{_datadir}/icons/hicolor/*/apps/*.*
 %dir /opt/Vesktop
+# Exclude chrome-sandbox from the generic wildcard so it isn't listed twice
+%exclude /opt/Vesktop/chrome-sandbox
 /opt/Vesktop/*
 # Enforce strict sandbox permissions natively
 %attr(4755, root, root) /opt/Vesktop/chrome-sandbox

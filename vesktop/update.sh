@@ -26,8 +26,8 @@ if [ "$NEW_VER" == "$CURRENT_VER" ]; then
     exit 0
 fi
 
-# Filter GitHub assets explicitly for the x86_64 RPM
-DOWNLOAD_URL=$(echo "$LATEST_JSON" | jq -r '.assets[] | select(.name | test("x86_64\\.rpm$")) | .browser_download_url' | head -n 1)
+# Filter GitHub assets specifically for Vencord's exact syntax: .x86_64.rpm
+DOWNLOAD_URL=$(echo "$LATEST_JSON" | jq -r '.assets[] | select(.name | test("\\.x86_64\\.rpm$")) | .browser_download_url' | head -n 1)
 
 if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" == "null" ]; then
     echo "❌ Error: Could not find x86_64 RPM in release."
