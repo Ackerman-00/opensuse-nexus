@@ -4,7 +4,7 @@
 %global __provides_exclude_from ^/opt/Vesktop/.*$
 
 Name:           vesktop
-Version:        1.6.5
+Version:        1.6.4
 Release:        0
 Summary:        Custom Discord desktop client with Vencord preinstalled (Nexus Optimized)
 License:        GPL-3.0-or-later
