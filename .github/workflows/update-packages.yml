@@ -102,10 +102,10 @@ jobs:
           # Check what changed before committing
           if ! git diff --quiet; then
             echo "updates_made=true" >> $GITHUB_OUTPUT
-            # Extract top-level folder names of modified files (these act as the package names for OBS)
-            git diff --name-only | awk -F/ '{print $1}' | sort -u > updated_packages.txt
-            echo "Packages queued for OBS rebuild:"
-            cat updated_packages.txt
+            # Capture the exact files modified before committing
+            git diff --name-only > .git_modified_files.txt
+            echo "Files modified:"
+            cat .git_modified_files.txt
           else
             echo "updates_made=false" >> $GITHUB_OUTPUT
           fi
@@ -119,21 +119,33 @@ jobs:
           git commit -m "auto-update: sync spec files to latest upstream versions"
           git push
 
-      - name: Trigger OpenSUSE OBS Rebuilds
+      - name: Push to OBS directly (Zero-Cache Method)
         if: steps.updater.outputs.updates_made == 'true'
         env:
           OBS_USER: ${{ secrets.OBS_USER }}
           OBS_PASS: ${{ secrets.OBS_PASS }}
         run: |
-          echo "⏳ Waiting 5 minutes for GitHub's raw file cache to clear..."
-          sleep 300
+          echo "==> 🚀 Uploading modified files directly to OBS via API..."
+          while read filepath; do
+            # Only process files inside a directory (ignores root files)
+            if [[ "$filepath" == */* ]] && [ -f "$filepath" ]; then
+              pkg=$(echo "$filepath" | cut -d/ -f1)
+              filename=$(basename "$filepath")
+              
+              echo " -> Uploading $filename to OBS package $pkg..."
+              curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -T "$filepath" \
+              "https://api.opensuse.org/source/home:ackerman/$pkg/$filename"
+            fi
+          done < .git_modified_files.txt
+
+          echo "==> ⚙️ Triggering OBS _service to grab the latest tarballs..."
+          # Extract unique package folders only
+          grep '/' .git_modified_files.txt | cut -d/ -f1 | sort -u > .updated_packages.txt
           
-          echo "==> Pinging OBS Developer API..."
           while read pkg; do
-            # Verify the parsed name is an actual directory to avoid triggering on root files like README.md
-            if [ -n "$pkg" ] && [ -d "$pkg" ]; then
-              echo " -> Triggering runservice for package: $pkg"
+            if [ -n "$pkg" ]; then
+              echo " -> Running service for: $pkg"
               curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
               "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=runservice"
             fi
-          done < updated_packages.txt
+          done < .updated_packages.txt

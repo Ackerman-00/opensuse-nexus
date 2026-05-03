@@ -1,31 +1,3 @@
 <services>
-  <!-- 1. Fetch your updated files directly from your raw Git URL -->
-  <service name="download_url">
-    <param name="host">raw.githubusercontent.com</param>
-    <param name="protocol">https</param>
-    <param name="path">/Ackerman-00/tumbleweed-nexus/main/zen-browser/zen-browser.spec</param>
-  </service>
-  <service name="download_url">
-    <param name="host">raw.githubusercontent.com</param>
-    <param name="protocol">https</param>
-    <param name="path">/Ackerman-00/tumbleweed-nexus/main/zen-browser/zen-browser.changes</param>
-  </service>
-  <service name="download_url">
-    <param name="host">raw.githubusercontent.com</param>
-    <param name="protocol">https</param>
-    <param name="path">/Ackerman-00/tumbleweed-nexus/main/zen-browser/zen-browser.sh</param>
-  </service>
-  <service name="download_url">
-    <param name="host">raw.githubusercontent.com</param>
-    <param name="protocol">https</param>
-    <param name="path">/Ackerman-00/tumbleweed-nexus/main/zen-browser/zen-browser.desktop</param>
-  </service>
-  <service name="download_url">
-    <param name="host">raw.githubusercontent.com</param>
-    <param name="protocol">https</param>
-    <param name="path">/Ackerman-00/tumbleweed-nexus/main/zen-browser/policies.json</param>
-  </service>
-
-  <!-- 2. Parse the downloaded .spec for the Source0 URL and get the tarball -->
   <service name="download_files" mode="buildtime" />
 </services>
