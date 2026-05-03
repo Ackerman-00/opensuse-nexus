@@ -125,25 +125,25 @@ jobs:
           OBS_USER: ${{ secrets.OBS_USER }}
           OBS_PASS: ${{ secrets.OBS_PASS }}
         run: |
-          echo "==> 🚀 Uploading modified files directly to OBS via API..."
-          while read filepath; do
-            # Only process files inside a directory (ignores root files)
-            if [[ "$filepath" == */* ]] && [ -f "$filepath" ]; then
-              pkg=$(echo "$filepath" | cut -d/ -f1)
-              filename=$(basename "$filepath")
-              
-              echo " -> Uploading $filename to OBS package $pkg..."
-              curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -T "$filepath" \
-              "https://api.opensuse.org/source/home:ackerman/$pkg/$filename"
-            fi
-          done < .git_modified_files.txt
-
-          echo "==> ⚙️ Triggering OBS _service to grab the latest tarballs..."
-          # Extract unique package folders only
+          echo "==> 🚀 Uploading complete package directories to OBS via API..."
           grep '/' .git_modified_files.txt | cut -d/ -f1 | sort -u > .updated_packages.txt
           
           while read pkg; do
-            if [ -n "$pkg" ]; then
+            if [ -n "$pkg" ] && [ -d "$pkg" ]; then
+              echo " -> Syncing all files for package: $pkg"
+              
+              # Find all files in the directory (includes hidden files like _service)
+              find "$pkg" -maxdepth 1 -type f | while read filepath; do
+                filename=$(basename "$filepath")
+                
+                # Skip update.sh since OBS doesn't need it
+                if [ "$filename" != "update.sh" ]; then
+                  echo "    Uploading $filename to OBS..."
+                  curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -T "$filepath" \
+                  "https://api.opensuse.org/source/home:ackerman/$pkg/$filename"
+                fi
+              done
+              
               echo " -> Running service for: $pkg"
               curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
               "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=runservice"
