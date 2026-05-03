@@ -1,2 +1,2 @@
-zen-browser/zen-browser.changes
-zen-browser/zen-browser.spec
+.git_modified_files.txt
+vesktop/vesktop.spec

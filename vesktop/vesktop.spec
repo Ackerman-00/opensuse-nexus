@@ -1,5 +1,5 @@
 Name:           vesktop
-Version:        1.6.4
+Version:        1.6.5
 Release:        0
 Summary:        A custom Discord App
 License:        GPL-3.0-only
