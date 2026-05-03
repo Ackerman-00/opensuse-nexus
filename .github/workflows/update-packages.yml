@@ -1,0 +1,136 @@
+name: Nexus Auto-Updater (OBS Pipeline)
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils jq curl
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install requests
+
+      - name: Run Modular Updaters
+        id: updater
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "==> Phase 1: Running Custom Modules (update.sh)..."
+          for script in $(find . -mindepth 2 -name "update.sh"); do
+            dir=$(dirname "$script")
+            pushd "$dir" > /dev/null
+            bash update.sh
+            popd > /dev/null
+          done
+
+          echo ""
+          echo "==> Phase 2: Scanning Standard Packages via GitHub API..."
+          python3 << 'EOF'
+          import os, re, requests
+          from pathlib import Path
+
+          gh_token = os.environ.get('GITHUB_TOKEN')
+          headers = {'Accept': 'application/vnd.github.v3+json'}
+          if gh_token: headers['Authorization'] = f'token {gh_token}'
+
+          for spec in Path('.').rglob('*.spec'):
+              # SAFETY CATCH: Skip packages that have their own update.sh script
+              if (spec.parent / 'update.sh').exists():
+                  continue
+                  
+              print(f"Scanning {spec.name}...")
+              content = spec.read_text(encoding='utf-8')
+              
+              # Auto-detect GitHub URLs in the spec
+              repo_match = re.search(r'https://github\.com/([^/\n\s"\']+)/([^/\n\s"\']+)', content, re.IGNORECASE)
+              version_match = re.search(r'^Version:\s*([0-9a-zA-Z.-]+)', content, re.MULTILINE)
+              tag_match = re.search(r'%global\s+tag\s+(.+)', content)
+              
+              if not repo_match: 
+                  print(f"  -> No GitHub URL found. Skipping.")
+                  continue
+                  
+              owner, repo = repo_match.group(1), repo_match.group(2)
+              # Clean trailing URLs
+              repo = re.sub(r'(\.git|/archive|/releases)$', '', repo, flags=re.IGNORECASE)
+
+              current_ver = version_match.group(1).strip() if version_match else None
+              current_tag = tag_match.group(1).strip() if tag_match else None
+
+              try:
+                  api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+                  res = requests.get(api_url, headers=headers, timeout=10)
+                  if res.status_code == 200:
+                      latest_tag = res.json().get('tag_name', '')
+                      latest_ver = latest_tag.lstrip('v')
+                      
+                      new_content = content
+                      changed = False
+                      
+                      if current_tag and latest_tag != current_tag:
+                          new_content = re.sub(r'(%global\s+tag\s+).+', rf'\g<1>{latest_tag}', new_content)
+                          changed = True
+                          print(f"  -> [UPDATE] {repo} changed from {current_tag} to {latest_tag}!")
+                      elif current_ver and latest_ver != current_ver:
+                          new_content = re.sub(r'(^Version:\s+).+', rf'\g<1>{latest_ver}', new_content, flags=re.MULTILINE)
+                          changed = True
+                          print(f"  -> [UPDATE] {repo} changed from {current_ver} to {latest_ver}!")
+                      else:
+                          print(f"  -> [OK] {repo} is already on latest.")
+                          
+                      if changed:
+                          spec.write_text(new_content, encoding='utf-8')
+                  else:
+                      print(f"  -> [ERROR] GitHub API returned {res.status_code}")
+              except Exception as e:
+                  print(f"  -> [ERROR] {e}")
+          EOF
+
+          # Check what changed before committing
+          if ! git diff --quiet; then
+            echo "updates_made=true" >> $GITHUB_OUTPUT
+            # Extract top-level folder names of modified files (these act as the package names for OBS)
+            git diff --name-only | awk -F/ '{print $1}' | sort -u > updated_packages.txt
+            echo "Packages queued for OBS rebuild:"
+            cat updated_packages.txt
+          else
+            echo "updates_made=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and Push
+        if: steps.updater.outputs.updates_made == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "auto-update: sync spec files to latest upstream versions"
+          git push
+
+      - name: Trigger OpenSUSE OBS Rebuilds
+        if: steps.updater.outputs.updates_made == 'true'
+        env:
+          OBS_USER: ${{ secrets.OBS_USER }}
+          OBS_PASS: ${{ secrets.OBS_PASS }}
+        run: |
+          echo "==> Pinging OBS Developer API..."
+          while read pkg; do
+            # Verify the parsed name is an actual directory to avoid triggering on root files like README.md
+            if [ -n "$pkg" ] && [ -d "$pkg" ]; then
+              echo " -> Triggering runservice for package: $pkg"
+              curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
+              "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=runservice"
+            fi
+          done < updated_packages.txt
