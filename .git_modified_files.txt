@@ -1,2 +1,3 @@
 .git_modified_files.txt
+vesktop/vesktop.changes
 vesktop/vesktop.spec
