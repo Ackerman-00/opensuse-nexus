@@ -1,10 +1,12 @@
 [Desktop Entry]
 Name=Vesktop
-Exec=/usr/bin/vesktop %U
-Terminal=false
-Type=Application
-Icon=vesktop
-StartupWMClass=Vesktop
 GenericName=Internet Messenger
-Categories=Network;
+Comment=Vencord-enhanced Discord client
+Exec=/usr/bin/vesktop %U
+Icon=vesktop
+Type=Application
+Terminal=false
+StartupWMClass=Vesktop
+Categories=Network;InstantMessaging;Chat;
 Keywords=discord;vencord;chat;
+MimeType=x-scheme-handler/discord;
