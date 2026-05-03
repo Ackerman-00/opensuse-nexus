@@ -26,11 +26,11 @@ if [ "$NEW_VER" == "$CURRENT_VER" ]; then
     exit 0
 fi
 
-# Filter GitHub assets for the generic tarball (ignoring arm64, mac, win)
-DOWNLOAD_URL=$(echo "$LATEST_JSON" | jq -r '.assets[] | select(.name | test("tar\\.gz$") and (test("arm64|mac|win") | not)) | .browser_download_url' | head -n 1)
+# Filter GitHub assets explicitly for the x86_64 RPM
+DOWNLOAD_URL=$(echo "$LATEST_JSON" | jq -r '.assets[] | select(.name | test("x86_64\\.rpm$")) | .browser_download_url' | head -n 1)
 
 if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" == "null" ]; then
-    echo "❌ Error: Could not find Linux x64 tarball in release."
+    echo "❌ Error: Could not find x86_64 RPM in release."
     exit 1
 fi
 
