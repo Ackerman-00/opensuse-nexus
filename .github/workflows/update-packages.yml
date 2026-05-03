@@ -125,6 +125,9 @@ jobs:
           OBS_USER: ${{ secrets.OBS_USER }}
           OBS_PASS: ${{ secrets.OBS_PASS }}
         run: |
+          echo "⏳ Waiting 5 minutes for GitHub's raw file cache to clear..."
+          sleep 300
+          
           echo "==> Pinging OBS Developer API..."
           while read pkg; do
             # Verify the parsed name is an actual directory to avoid triggering on root files like README.md
