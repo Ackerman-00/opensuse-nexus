@@ -1,0 +1,2 @@
+zen-browser/zen-browser.changes
+zen-browser/zen-browser.spec
