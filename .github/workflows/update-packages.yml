@@ -132,16 +132,12 @@ jobs:
             if [ -n "$pkg" ] && [ -d "$pkg" ]; then
               echo " -> Syncing all files for package: $pkg"
               
-              # Find all files in the directory (includes hidden files like _service)
-              find "$pkg" -maxdepth 1 -type f | while read filepath; do
+              # Find all files in the directory EXCEPT update.sh
+              find "$pkg" -maxdepth 1 -type f ! -name "update.sh" | while read filepath; do
                 filename=$(basename "$filepath")
-                
-                # Skip update.sh since OBS doesn't need it
-                if [ "$filename" != "update.sh" ]; then
-                  echo "    Uploading $filename to OBS..."
-                  curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -T "$filepath" \
-                  "https://api.opensuse.org/source/home:ackerman/$pkg/$filename"
-                fi
+                echo "    Uploading $filename to OBS..."
+                curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -T "$filepath" \
+                "https://api.opensuse.org/source/home:ackerman/$pkg/$filename"
               done
               
               echo " -> Running service for: $pkg"
