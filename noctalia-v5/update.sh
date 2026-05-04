@@ -37,8 +37,9 @@ fi
 
 echo "🚀 New commit found: $SHORT_COMMIT (Timestamp: $LATEST_DATE)"
 
-# 1. Update the globals in the .spec file
+# 1. Update the globals in the .spec file (now handling shortcommit directly)
 sed -i "s/^%global commit.*/%global commit          $LATEST_COMMIT/" "$SPEC_FILE"
+sed -i "s/^%global shortcommit.*/%global shortcommit     $SHORT_COMMIT/" "$SPEC_FILE"
 sed -i "s/^%global gitdate.*/%global gitdate         $LATEST_DATE/" "$SPEC_FILE"
 sed -i "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 
