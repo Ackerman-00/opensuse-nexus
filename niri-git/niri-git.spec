@@ -1,0 +1,123 @@
+# These will be automatically populated by update.sh
+%global commit          1f07cffa9f355298a31d7efe1b400ede93a97728
+%global shortcommit     1f07cff
+
+Name:           niri-git
+Version:        20260502
+Release:        0
+Summary:        A scrollable-tiling Wayland compositor (Nexus Optimized)
+
+License:        GPL-3.0-or-later
+Group:          System/GUI/Other
+URL:            https://github.com/YaLTeR/niri
+
+# Generated dynamically by GitHub Actions
+Source0:        niri-%{shortcommit}.tar.gz
+Source1:        vendor.tar.xz
+Source2:        cargo_config
+
+ExclusiveArch:  x86_64 aarch64
+
+BuildRequires:  cargo-packaging
+BuildRequires:  clang
+BuildRequires:  clang-devel
+BuildRequires:  llvm-devel
+BuildRequires:  gcc-c++
+BuildRequires:  systemd-rpm-macros
+BuildRequires:  pkgconfig(cairo-gobject)
+BuildRequires:  pkgconfig(dbus-1)
+BuildRequires:  pkgconfig(egl)
+BuildRequires:  pkgconfig(gbm)
+BuildRequires:  pkgconfig(libdisplay-info)
+BuildRequires:  pkgconfig(libinput)
+BuildRequires:  pkgconfig(libseat)
+BuildRequires:  pkgconfig(libudev)
+BuildRequires:  pkgconfig(pango)
+BuildRequires:  pkgconfig(pangocairo)
+BuildRequires:  pkgconfig(pixman-1)
+BuildRequires:  pkgconfig(systemd)
+BuildRequires:  pkgconfig(wayland-client)
+BuildRequires:  pkgconfig(wayland-server)
+BuildRequires:  pkgconfig(xkbcommon)
+BuildRequires:  pkgconfig(libpipewire-0.3)
+
+Requires:       xwayland-satellite-git
+Requires:       mesa-dri
+Requires:       Mesa-libEGL1
+Requires:       libwayland-server0
+
+Recommends:     xdg-desktop-portal-gtk
+Recommends:     xdg-desktop-portal-gnome
+Recommends:     gnome-keyring
+
+Provides:       niri = %{version}
+Conflicts:      niri
+
+%description
+A scrollable-tiling Wayland compositor.
+Compiled specifically for the Nexus repository via automated Git snapshot. Stripped of all secondary GUI bloat and synchronized with our custom Xwayland bridge for peak performance.
+
+%prep
+# Extract Source0 and Source1
+%autosetup -n niri-%{commit} -p1 -a1
+
+# Inject offline cargo config
+mkdir -p .cargo
+cp %{SOURCE2} .cargo/config
+
+%build
+# Set the commit string for the binary output
+export NIRI_BUILD_COMMIT="%{shortcommit}"
+
+# Let Cargo handle the raw compilation entirely offline
+cargo build --offline --release
+
+# Generate shell completions
+target/release/niri completions bash > ./niri.bash
+target/release/niri completions fish > ./niri.fish
+target/release/niri completions zsh > ./_niri
+
+%install
+# Install the core binaries
+install -Dpm0755 target/release/niri -t %{buildroot}%{_bindir}
+install -Dpm0755 resources/niri-session -t %{buildroot}%{_bindir}
+
+# Install standard Wayland session and systemd configurations
+install -Dpm0644 resources/niri.desktop -t %{buildroot}%{_datadir}/wayland-sessions
+install -Dpm0644 resources/niri-portals.conf -t %{buildroot}%{_datadir}/xdg-desktop-portal
+install -Dpm0644 resources/niri.service -t %{buildroot}%{_userunitdir}
+install -Dpm0644 resources/niri-shutdown.target -t %{buildroot}%{_userunitdir}
+
+# Install completions
+install -Dpm0644 niri.bash %{buildroot}%{_datadir}/bash-completion/completions/niri
+install -Dpm0644 niri.fish %{buildroot}%{_datadir}/fish/vendor_completions.d/niri.fish
+install -Dpm0644 _niri %{buildroot}%{_datadir}/zsh/site-functions/_niri
+
+%files
+%license LICENSE
+%doc README.md
+%doc resources/default-config.kdl
+%{_bindir}/niri
+%{_bindir}/niri-session
+%{_userunitdir}/niri.service
+%{_userunitdir}/niri-shutdown.target
+
+# Explicit directory ownership for openSUSE RPMLINT
+%dir %{_datadir}/wayland-sessions
+%{_datadir}/wayland-sessions/niri.desktop
+%dir %{_datadir}/xdg-desktop-portal
+%{_datadir}/xdg-desktop-portal/niri-portals.conf
+
+%dir %{_datadir}/bash-completion
+%dir %{_datadir}/bash-completion/completions
+%{_datadir}/bash-completion/completions/niri
+
+%dir %{_datadir}/fish
+%dir %{_datadir}/fish/vendor_completions.d
+%{_datadir}/fish/vendor_completions.d/niri.fish
+
+%dir %{_datadir}/zsh
+%dir %{_datadir}/zsh/site-functions
+%{_datadir}/zsh/site-functions/_niri
+
+%changelog
