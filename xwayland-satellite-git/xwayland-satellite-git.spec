@@ -1,5 +1,5 @@
 # These will be automatically populated by update.sh
-%global commit          a879e5e0896a326adc79c474bf457b8b99011027
+%global commit          0000000000000000000000000000000000000000
 %global shortcommit     a879e5e
 %global gitdate         20260316005105
 
@@ -71,7 +71,7 @@ install -Dpm0644 resources/xwayland-satellite.service -t %{buildroot}%{_userunit
 %systemd_user_preun xwayland-satellite.service
 
 %postun
-%systemd_user_postun_with_reload xwayland-satellite.service
+%systemd_user_postun xwayland-satellite.service
 
 %files
 %license LICENSE
