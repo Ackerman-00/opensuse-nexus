@@ -42,8 +42,13 @@ sed -i "s/^%global commit.*/%global commit          $LATEST_COMMIT/" "$SPEC_FILE
 sed -i "s/^%global gitdate.*/%global gitdate         $LATEST_DATE/" "$SPEC_FILE"
 sed -i "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 
+# 2. Clean up old tarballs and download the new one natively
+echo "📦 Downloading source tarball from GitHub..."
+rm -f noctalia-shell-*.tar.gz
+curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "noctalia-shell-$SHORT_COMMIT.tar.gz"
+
+# 3. Generate OBS changes file
 echo "📝 Generating OBS changes file..."
-# Create the standard OpenSUSE changelog format
 FORMATTED_DATE=$(LC_ALL=C date +"%a %b %d %T UTC %Y")
 NEW_CHANGELOG_ENTRY="-------------------------------------------------------------------\n$FORMATTED_DATE - $PACKAGER\n\n- Nightly sync with upstream $BRANCH branch (Commit: $SHORT_COMMIT)\n\n"
 
@@ -53,4 +58,4 @@ else
     echo -e "$NEW_CHANGELOG_ENTRY" > "$CHANGES_FILE"
 fi
 
-echo "🎉 Success! noctalia-v5 is updated to git $SHORT_COMMIT. Ready for commit."
+echo "🎉 Success! noctalia-v5 is updated to git $SHORT_COMMIT and tarball is ready. Ready for OBS sync."
