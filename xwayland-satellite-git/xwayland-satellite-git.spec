@@ -1,5 +1,5 @@
 # These will be automatically populated by update.sh
-%global commit          a879e5e0896a326adc79c474bf457b8b99011027
+%global commit          0000000000000000000000000000000000000000
 %global shortcommit     a879e5e
 %global gitdate         20260504120000
 
