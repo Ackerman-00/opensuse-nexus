@@ -2,6 +2,7 @@
 
 SPEC_FILE="matugen.spec"
 CHANGES_FILE="matugen.changes"
+SERVICE_FILE="_service"
 REPO="InioX/matugen"
 PACKAGER="Ackerman-00 <quietcraft@gmail.com>"
 
@@ -27,9 +28,15 @@ if [ "$NEW_VER" == "$CURRENT_VER" ]; then
     exit 0
 fi
 
-echo "🚀 New version found! Updating $SPEC_FILE..."
+echo "🚀 New version found! Updating $SPEC_FILE and $SERVICE_FILE..."
 sed -i "s|^Version:.*|Version:        $NEW_VER|" "$SPEC_FILE"
 sed -i "s|^Release:.*|Release:        0|" "$SPEC_FILE"
+
+# Dynamically update the OBS _service file so it clones the exact new tag
+if [ -f "$SERVICE_FILE" ]; then
+    sed -i "s|<param name=\"revision\">.*</param>|<param name=\"revision\">$LATEST_TAG</param>|" "$SERVICE_FILE"
+    sed -i "s|<param name=\"versionformat\">.*</param>|<param name=\"versionformat\">$NEW_VER</param>|" "$SERVICE_FILE"
+fi
 
 echo "📝 Updating changelog..."
 FORMATTED_DATE=$(LC_ALL=C date +"%a %b %d %T UTC %Y")
