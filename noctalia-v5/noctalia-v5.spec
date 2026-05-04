@@ -1,5 +1,5 @@
 # These will be automatically populated by update.sh
-%global commit          8083d29cf1a2d225e176e1f83d2873717f4d6f48
+%global commit          f855983a2cff79b0ee13879ea40e2b4d60c1772f
 %global shortcommit     %(c=%{commit}; echo ${c:0:7})
 %global gitdate         20260504042554
 
