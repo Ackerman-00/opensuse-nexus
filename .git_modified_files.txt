@@ -1,5 +1,3 @@
 .git_modified_files.txt
-matugen/matugen.changes
-matugen/matugen.spec
 noctalia-v5/noctalia-v5.changes
 noctalia-v5/noctalia-v5.spec
