@@ -1,9 +1,11 @@
 # These will be automatically populated by update.sh
 %global commit          1f07cffa9f355298a31d7efe1b400ede93a97728
 %global shortcommit     1f07cff
+%global gitdate         20260504120000
 
 Name:           niri-git
-Version:        20260502
+# Automatically combines the base version (26.04) with the exact timestamp and commit
+Version:        26.04+git%{gitdate}.%{shortcommit}
 Release:        0
 Summary:        A scrollable-tiling Wayland compositor (Nexus Optimized)
 

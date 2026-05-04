@@ -8,10 +8,13 @@ PACKAGER="Ackerman-00 <quietcraft@gmail.com>"
 echo "🔍 Checking for upstream updates on $GITHUB_REPO..."
 
 if [ -n "$GITHUB_TOKEN" ]; then
-    LATEST_COMMIT=$(curl -sL -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$GITHUB_REPO/commits/main" | jq -r '.sha')
+    API_RESPONSE=$(curl -sL -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$GITHUB_REPO/commits/main")
 else
-    LATEST_COMMIT=$(curl -sL "https://api.github.com/repos/$GITHUB_REPO/commits/main" | jq -r '.sha')
+    API_RESPONSE=$(curl -sL "https://api.github.com/repos/$GITHUB_REPO/commits/main")
 fi
+
+LATEST_COMMIT=$(echo "$API_RESPONSE" | jq -r '.sha')
+LATEST_DATE_RAW=$(echo "$API_RESPONSE" | jq -r '.commit.committer.date')
 
 if [ -z "$LATEST_COMMIT" ] || [ "$LATEST_COMMIT" == "null" ]; then
     echo "❌ Error: Failed to fetch Xwayland-Satellite commit from GitHub. Check API limits or connection."
@@ -20,7 +23,7 @@ fi
 
 CURRENT_COMMIT=$(grep -E "^%global commit" "$SPEC_FILE" | awk '{print $3}')
 SHORT_COMMIT=${LATEST_COMMIT:0:7}
-DATE_VER=$(date -u +%Y%m%d)
+LATEST_DATE=$(echo "$LATEST_DATE_RAW" | sed 's/[-T:Z]//g')
 
 if [ "$CURRENT_COMMIT" == "$LATEST_COMMIT" ]; then
     echo "✅ Package is already at the latest commit ($SHORT_COMMIT). No update needed."
@@ -32,7 +35,7 @@ echo "🚀 Update found: ${CURRENT_COMMIT:0:7} -> $SHORT_COMMIT"
 # 1. Update the spec file globals natively
 sed -i -E "s/^%global commit.*/%global commit          $LATEST_COMMIT/" "$SPEC_FILE"
 sed -i -E "s/^%global shortcommit.*/%global shortcommit     $SHORT_COMMIT/" "$SPEC_FILE"
-sed -i -E "s/^Version:.*/Version:        $DATE_VER/" "$SPEC_FILE"
+sed -i -E "s/^%global gitdate.*/%global gitdate         $LATEST_DATE/" "$SPEC_FILE"
 sed -i -E "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 
 # 2. Download source and vendor Rust dependencies
