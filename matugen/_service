@@ -1,18 +1,16 @@
 <services>
-  <service name="obs_scm">
+  <service name="obs_scm" mode="disabled">
     <param name="url">https://github.com/InioX/matugen.git</param>
     <param name="scm">git</param>
-    <param name="revision">v@PARENT_TAG@</param>
-    <param name="versionformat">@PARENT_TAG@</param>
-    <param name="match-tag">v*</param>
-    <param name="versionrewrite-pattern">v(.*)</param>
+    <param name="revision">v4.0.0</param>
+    <param name="versionformat">4.0.0</param>
   </service>
-  <service name="tar" />
-  <service name="recompress">
+  <service name="tar" mode="disabled" />
+  <service name="recompress" mode="disabled">
     <param name="file">*.tar</param>
     <param name="compression">gz</param>
   </service>
-  <service name="cargo_vendor">
+  <service name="cargo_vendor" mode="disabled">
      <param name="srcdir">matugen</param>
      <param name="compression">xz</param>
      <param name="update">true</param>
