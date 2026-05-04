@@ -2,7 +2,6 @@
 
 SPEC_FILE="matugen.spec"
 CHANGES_FILE="matugen.changes"
-SERVICE_FILE="_service"
 REPO="InioX/matugen"
 PACKAGER="Ackerman-00 <quietcraft@gmail.com>"
 
@@ -28,15 +27,27 @@ if [ "$NEW_VER" == "$CURRENT_VER" ]; then
     exit 0
 fi
 
-echo "🚀 New version found! Updating $SPEC_FILE and $SERVICE_FILE..."
+echo "🚀 New version found! Updating $SPEC_FILE..."
 sed -i "s|^Version:.*|Version:        $NEW_VER|" "$SPEC_FILE"
 sed -i "s|^Release:.*|Release:        0|" "$SPEC_FILE"
 
-# Dynamically update the OBS _service file so it clones the exact new tag
-if [ -f "$SERVICE_FILE" ]; then
-    sed -i "s|<param name=\"revision\">.*</param>|<param name=\"revision\">$LATEST_TAG</param>|" "$SERVICE_FILE"
-    sed -i "s|<param name=\"versionformat\">.*</param>|<param name=\"versionformat\">$NEW_VER</param>|" "$SERVICE_FILE"
-fi
+echo "📦 Downloading source and generating Rust vendor tarball..."
+curl -sL "https://github.com/$REPO/archive/refs/tags/$LATEST_TAG.tar.gz" -o "matugen-$NEW_VER.tar.gz"
+
+tar -xzf "matugen-$NEW_VER.tar.gz"
+cd "matugen-$NEW_VER" || exit 1
+
+# Generate vendor directory and config
+echo "⚙️  Vendoring cargo dependencies..."
+cargo vendor > ../cargo_config
+
+# Compress the vendor directory
+echo "🗜️  Compressing vendor tarball..."
+tar -cJf ../vendor.tar.xz vendor
+
+# Cleanup
+cd ..
+rm -rf "matugen-$NEW_VER"
 
 echo "📝 Updating changelog..."
 FORMATTED_DATE=$(LC_ALL=C date +"%a %b %d %T UTC %Y")
@@ -48,4 +59,4 @@ else
     echo -e "$NEW_CHANGELOG_ENTRY" > "$CHANGES_FILE"
 fi
 
-echo "🎉 Success! Git files updated to v$NEW_VER. Ready for commit."
+echo "🎉 Success! Git files updated to v$NEW_VER and tarballs generated. Ready for OBS sync."
