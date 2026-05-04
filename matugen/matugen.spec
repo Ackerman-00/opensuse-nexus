@@ -1,5 +1,5 @@
 Name:           matugen
-Version:        4.1.0
+Version:        4.0.0
 Release:        0
 Summary:        Material You color generation tool (Nexus Optimized)
 
