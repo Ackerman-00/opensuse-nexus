@@ -47,14 +47,12 @@ jobs:
           if gh_token: headers['Authorization'] = f'token {gh_token}'
 
           for spec in Path('.').rglob('*.spec'):
-              # SAFETY CATCH: Skip packages that have their own update.sh script
               if (spec.parent / 'update.sh').exists():
                   continue
                   
               print(f"Scanning {spec.name}...")
               content = spec.read_text(encoding='utf-8')
               
-              # Auto-detect GitHub URLs in the spec
               repo_match = re.search(r'https://github\.com/([^/\n\s"\']+)/([^/\n\s"\']+)', content, re.IGNORECASE)
               version_match = re.search(r'^Version:\s*([0-9a-zA-Z.-]+)', content, re.MULTILINE)
               tag_match = re.search(r'%global\s+tag\s+(.+)', content)
@@ -64,7 +62,6 @@ jobs:
                   continue
                   
               owner, repo = repo_match.group(1), repo_match.group(2)
-              # Clean trailing URLs
               repo = re.sub(r'(\.git|/archive|/releases)$', '', repo, flags=re.IGNORECASE)
 
               current_ver = version_match.group(1).strip() if version_match else None
@@ -99,10 +96,8 @@ jobs:
                   print(f"  -> [ERROR] {e}")
           EOF
 
-          # Check what changed before committing
           if ! git diff --quiet; then
             echo "updates_made=true" >> $GITHUB_OUTPUT
-            # Capture the exact files modified before committing
             git diff --name-only > .git_modified_files.txt
             echo "Files modified:"
             cat .git_modified_files.txt
@@ -119,28 +114,39 @@ jobs:
           git commit -m "auto-update: sync spec files to latest upstream versions"
           git push
 
-      - name: Push to OBS directly (Zero-Cache Method)
+      - name: Smart Sync to OBS (Anti-Bloat Method)
         if: steps.updater.outputs.updates_made == 'true'
         env:
           OBS_USER: ${{ secrets.OBS_USER }}
           OBS_PASS: ${{ secrets.OBS_PASS }}
         run: |
-          echo "==> 🚀 Uploading complete package directories to OBS via API..."
+          echo "==> 🚀 Syncing packages to OBS..."
           grep '/' .git_modified_files.txt | cut -d/ -f1 | sort -u > .updated_packages.txt
           
           while read pkg; do
             if [ -n "$pkg" ] && [ -d "$pkg" ]; then
-              echo " -> Syncing all files for package: $pkg"
+              echo " -> Processing package: $pkg"
               
-              # Find all files in the directory EXCEPT update.sh
+              # 1. Fetch current file list from OBS
+              OBS_FILES=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -oP '(?<=name=")[^"]+')
+              
+              # 2. Smart Delete: Erase files on OBS that no longer exist locally (like old tarballs)
+              for remote_file in $OBS_FILES; do
+                if [ ! -f "$pkg/$remote_file" ] || [ "$remote_file" == "update.sh" ]; then
+                  echo "    🗑️ Deleting obsolete file from OBS: $remote_file"
+                  curl -s -X DELETE -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg/$remote_file"
+                fi
+              done
+              
+              # 3. Upload new/current files
               find "$pkg" -maxdepth 1 -type f ! -name "update.sh" | while read filepath; do
                 filename=$(basename "$filepath")
-                echo "    Uploading $filename to OBS..."
+                echo "    📤 Uploading $filename to OBS..."
                 curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -T "$filepath" \
                 "https://api.opensuse.org/source/home:ackerman/$pkg/$filename"
               done
               
-              echo " -> Running service for: $pkg"
+              echo " -> Triggering build for: $pkg"
               curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
               "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=runservice"
             fi
