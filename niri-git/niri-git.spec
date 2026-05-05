@@ -44,7 +44,7 @@ BuildRequires:  pkgconfig(xkbcommon)
 BuildRequires:  pkgconfig(libpipewire-0.3)
 
 Requires:       xwayland-satellite-git
-Requires:       mesa-dri
+Requires:       Mesa-dri
 Requires:       Mesa-libEGL1
 Requires:       libwayland-server0
 
