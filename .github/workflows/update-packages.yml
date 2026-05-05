@@ -127,8 +127,8 @@ jobs:
             if [ -n "$pkg" ] && [ -d "$pkg" ]; then
               echo " -> Processing package: $pkg"
               
-              # 1. Fetch current file list from OBS
-              OBS_FILES=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -oP '(?<=name=")[^"]+')
+              # 1. Fetch current file list from OBS (Fixed regex to target entries only)
+              OBS_FILES=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -oP '(?<=<entry name=")[^"]+')
               
               # 2. Smart Delete: Erase files on OBS that no longer exist locally (like old tarballs)
               for remote_file in $OBS_FILES; do
@@ -138,8 +138,8 @@ jobs:
                 fi
               done
               
-              # 3. Upload new/current files
-              find "$pkg" -maxdepth 1 -type f ! -name "update.sh" | while read filepath; do
+              # 3. Upload new/current files (Ignoring update.sh and hidden files like .gitignore)
+              find "$pkg" -maxdepth 1 -type f ! -name "update.sh" ! -name ".*" | while read filepath; do
                 filename=$(basename "$filepath")
                 echo "    📤 Uploading $filename to OBS..."
                 curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -T "$filepath" \
