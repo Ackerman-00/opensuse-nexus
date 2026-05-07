@@ -2,7 +2,7 @@
 %global debug_package %{nil}
 
 Name:           obsidian
-Version:        1.12.6
+Version:        1.12.7
 Release:        0
 Summary:        A powerful knowledge base that works on top of a local folder of plain text Markdown files
 

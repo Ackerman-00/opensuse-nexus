@@ -1,4 +1,3 @@
 .git_modified_files.txt
-noctalia-v5/noctalia-v5.changes
-noctalia-v5/noctalia-v5.spec
+obsidian/obsidian.changes
 obsidian/obsidian.spec
