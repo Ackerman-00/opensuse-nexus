@@ -2,11 +2,13 @@
 %global debug_package %{nil}
 
 Name:           obsidian
-Version:        1.12.7
+Version:        1.12.6
 Release:        0
-Summary:        A powerful knowledge base that works on top of a local folder of plain text Markdown files
+# Shortened to pass the 79-character RPMLINT limit
+Summary:        A powerful knowledge base for plain text Markdown files
 
-License:        Commercial
+# OpenSUSE requires this exact string for proprietary software
+License:        SUSE-NonFree
 Group:          Productivity/Text/Editors
 URL:            https://obsidian.md/
 ExclusiveArch:  x86_64 aarch64
@@ -24,7 +26,6 @@ BuildRequires:  fdupes
 # Native System Dependencies
 Requires:       electron
 Requires:       bash
-Requires:       hicolor-icon-theme
 
 # Prevent automatic dependency generation for the bundled ASAR/Node files
 AutoReqProv:    no
@@ -73,6 +74,8 @@ EOF
 # 4. Install the Icon safely using a dynamic finder to avoid filename crashes
 ICON_FILE=$(find . -name "*.png" | head -n 1)
 install -Dm644 "$ICON_FILE" %{buildroot}%{_datadir}/pixmaps/%{app_id}.png
+
+find %{buildroot}%{_libdir}/%{name} -type f \( -name "*.js" -o -name "*.json" -o -name "*.mm" \) -exec chmod a-x {} +
 
 # OpenSUSE optimization: hardlink duplicate files in resources
 %fdupes %{buildroot}%{_libdir}/%{name}
