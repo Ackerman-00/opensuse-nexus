@@ -2,7 +2,7 @@
 %global debug_package %{nil}
 
 Name:           obsidian
-Version:        1.12.6
+Version:        1.12.7
 Release:        0
 # Shortened to pass the 79-character RPMLINT limit
 Summary:        A powerful knowledge base for plain text Markdown files
