@@ -4,7 +4,6 @@
 %global gitdate         20260316005105
 
 Name:           xwayland-satellite-git
-# Automatically combines the base version (0.8.1) with the exact timestamp and commit
 Version:        0.8.1+git%{gitdate}.%{shortcommit}
 Release:        0
 Summary:        Rootless Xwayland integration for Wayland compositors (Nexus Optimized)
