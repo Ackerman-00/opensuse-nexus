@@ -1,5 +1,3 @@
 .git_modified_files.txt
 noctalia-v5/noctalia-v5.changes
 noctalia-v5/noctalia-v5.spec
-xwayland-satellite-git/xwayland-satellite-git.changes
-xwayland-satellite-git/xwayland-satellite-git.spec
