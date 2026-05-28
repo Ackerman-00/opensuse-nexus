@@ -1,7 +1,7 @@
 # These will be automatically populated by update.sh
-%global commit          4294948cf1c70c50e938383c2c865d7ca455ac7e
-%global shortcommit     4294948
-%global gitdate         20260521144743
+%global commit          9a6f31012d031a7fccaf607b49080ddce44f0935
+%global shortcommit     9a6f310
+%global gitdate         20260528050818
 
 Name:           niri-git
 # Automatically combines the base version (26.04) with the exact timestamp and commit
