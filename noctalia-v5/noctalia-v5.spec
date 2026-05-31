@@ -35,6 +35,8 @@ BuildRequires:  pkgconfig(librsvg-2.0)
 # New dependencies added per upstream v5 announcement
 BuildRequires:  pkgconfig(libqalculate)
 BuildRequires:  pkgconfig(libxml-2.0)
+# Missing dependency that causes Meson to abort
+BuildRequires:  jemalloc-devel
 
 Conflicts:      noctalia
 Conflicts:      noctalia-bin
