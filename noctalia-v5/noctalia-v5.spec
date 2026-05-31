@@ -32,6 +32,9 @@ BuildRequires:  pkgconfig(libwebp)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  polkit-devel
 BuildRequires:  pkgconfig(librsvg-2.0)
+# New dependencies added per upstream v5 announcement
+BuildRequires:  pkgconfig(libqalculate)
+BuildRequires:  pkgconfig(libxml-2.0)
 
 Conflicts:      noctalia
 Conflicts:      noctalia-bin
