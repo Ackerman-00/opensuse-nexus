@@ -12,9 +12,10 @@ Group:          System/GUI/Other
 URL:            https://github.com/noctalia-dev/noctalia-shell
 Source0:        %{url}/archive/%{commit}/noctalia-shell-%{shortcommit}.tar.gz
 
+ExclusiveArch:  x86_64 aarch64
+
 BuildRequires:  meson
 BuildRequires:  gcc-c++
-BuildRequires:  just
 BuildRequires:  pkgconfig(wayland-client)
 BuildRequires:  pkgconfig(wayland-protocols)
 BuildRequires:  pkgconfig(egl)
@@ -52,7 +53,12 @@ with no Qt or GTK dependency. This package tracks the experimental unreleased v5
 %autosetup -n noctalia-shell-%{commit}
 
 %build
-%meson
+# Force C++23 standard to fix the std::string_view 'contains' compiler error
+# Add -Wno-unused-result to bypass strict GCC warnings, matching the Arch PKGBUILD
+export CXXFLAGS="%{optflags} -std=c++23 -Wno-unused-result"
+export CFLAGS="%{optflags}"
+
+%meson -Db_ndebug=true
 %meson_build
 
 %install
