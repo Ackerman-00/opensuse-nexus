@@ -4,11 +4,9 @@
 %global gitdate         20260605052852
 
 Name:           niri-git
-# Automatically combines the base version (26.04) with the exact timestamp and commit
 Version:        26.04+git%{gitdate}.%{shortcommit}
 Release:        0
 Summary:        A scrollable-tiling Wayland compositor (Nexus Optimized)
-
 License:        GPL-3.0-or-later
 Group:          System/GUI/Other
 URL:            https://github.com/YaLTeR/niri
@@ -53,6 +51,7 @@ Recommends:     xdg-desktop-portal-gnome
 Recommends:     gnome-keyring
 
 Provides:       niri = %{version}
+Provides:       wayland-compositor
 Conflicts:      niri
 
 %description
@@ -60,21 +59,27 @@ A scrollable-tiling Wayland compositor.
 Compiled specifically for the Nexus repository via automated Git snapshot. Stripped of all secondary GUI bloat and synchronized with our custom Xwayland bridge for peak performance.
 
 %prep
-# Extract Source0 and Source1
+# Extract Source0 and Source1 smoothly
 %autosetup -n niri-%{commit} -p1 -a1
 
-# Inject offline cargo config
+# Inject offline cargo configuration safely
 mkdir -p .cargo
 cp %{SOURCE2} .cargo/config
 
 %build
-# Set the commit string for the binary output
+# Set the commit string for the binary output metadata
 export NIRI_BUILD_COMMIT="%{shortcommit}"
 
-# Let Cargo handle the raw compilation entirely offline
-cargo build --offline --release
+# Arch adds fat-lto-objects to ensure proper static linking across dependencies
+export CFLAGS="%{optflags} -ffat-lto-objects"
+export CXXFLAGS="%{optflags} -ffat-lto-objects"
 
-# Generate shell completions
+# Inject openSUSE native system optimization/rust flags while honoring your offline layout
+export RUSTFLAGS="%{build_rustflags}"
+cargo build --offline --release --features default
+
+# Generate shell completions safely by initializing a mocked runtime environment
+export XDG_RUNTIME_DIR=$(mktemp -d)
 target/release/niri completions bash > ./niri.bash
 target/release/niri completions fish > ./niri.fish
 target/release/niri completions zsh > ./_niri
@@ -90,7 +95,7 @@ install -Dpm0644 resources/niri-portals.conf -t %{buildroot}%{_datadir}/xdg-desk
 install -Dpm0644 resources/niri.service -t %{buildroot}%{_userunitdir}
 install -Dpm0644 resources/niri-shutdown.target -t %{buildroot}%{_userunitdir}
 
-# Install completions
+# Install completions matching openSUSE downstream paths
 install -Dpm0644 niri.bash %{buildroot}%{_datadir}/bash-completion/completions/niri
 install -Dpm0644 niri.fish %{buildroot}%{_datadir}/fish/vendor_completions.d/niri.fish
 install -Dpm0644 _niri %{buildroot}%{_datadir}/zsh/site-functions/_niri
@@ -101,15 +106,19 @@ install -Dpm0644 _niri %{buildroot}%{_datadir}/zsh/site-functions/_niri
 %doc resources/default-config.kdl
 %{_bindir}/niri
 %{_bindir}/niri-session
+
+# Explicitly own user systemd directories to satisfy strict RPMLINT rules
+%dir %{_userunitdir}
 %{_userunitdir}/niri.service
 %{_userunitdir}/niri-shutdown.target
 
-# Explicit directory ownership for openSUSE RPMLINT
+# Explicit directory ownership for session files
 %dir %{_datadir}/wayland-sessions
 %{_datadir}/wayland-sessions/niri.desktop
 %dir %{_datadir}/xdg-desktop-portal
 %{_datadir}/xdg-desktop-portal/niri-portals.conf
 
+# Complete shell completion ownership architecture
 %dir %{_datadir}/bash-completion
 %dir %{_datadir}/bash-completion/completions
 %{_datadir}/bash-completion/completions/niri
