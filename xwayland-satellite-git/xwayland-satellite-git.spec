@@ -29,7 +29,7 @@ BuildRequires:  pkgconfig(wayland-cursor)
 BuildRequires:  pkgconfig(wayland-server)
 BuildRequires:  pkgconfig(xcb-cursor)
 
-# OpenSUSE specific naming
+# OpenSUSE specific naming architecture
 Requires:       xwayland
 Requires:       google-opensans-fonts
 
@@ -42,21 +42,26 @@ compositor implementing xdg_wm_base and viewporter. This package tracks
 the bleeding-edge master branch.
 
 %prep
-# Extract Source0 and Source1
+# Extract Source0 and Source1 smoothly
 %autosetup -n xwayland-satellite-%{commit} -p1 -a1
 
-# Inject offline cargo config
+# Inject offline cargo config securely
 mkdir -p .cargo
 cp %{SOURCE2} .cargo/config
 
-# Dynamically fix the executable path in the systemd unit
-sed -i 's|/usr/local/bin|/usr/bin|g' resources/xwayland-satellite.service
+# Dynamically fix the executable path in the systemd unit using system path macros
+sed -i 's|/usr/local/bin|%{_bindir}|g' resources/xwayland-satellite.service
 
-# Remove vendored decoration font if it exists in the current git tree
+# Remove vendored decoration font if it exists in the current git tree to save weight
 rm -f OpenSans-Regular.ttf
 
 %build
-# We let Cargo handle the compilation entirely offline with specific features
+# Arch adds fat-lto-objects to ensure proper static linking across dependencies
+export CFLAGS="%{optflags} -ffat-lto-objects"
+export CXXFLAGS="%{optflags} -ffat-lto-objects"
+
+# Inject openSUSE native system optimization/rust flags while honoring your offline layout
+export RUSTFLAGS="%{build_rustflags}"
 cargo build --offline --release --features systemd,fontconfig
 
 %install
@@ -76,6 +81,9 @@ install -Dpm0644 resources/xwayland-satellite.service -t %{buildroot}%{_userunit
 %license LICENSE
 %doc README.md
 %{_bindir}/xwayland-satellite
+
+# Explicitly own user systemd directories to satisfy strict Tumbleweed packaging constraints
+%dir %{_userunitdir}
 %{_userunitdir}/xwayland-satellite.service
 
 %changelog
