@@ -1,6 +1,6 @@
 # These will be automatically populated by update.sh
-%global commit          f717ae030fe56fc52522ebef69f17f3f09064ac4
-%global shortcommit     f717ae0
+%global commit          00000000000000000000000000000000000
+%global shortcommit     000000
 %global gitdate         20260605052852
 
 Name:           niri-git
@@ -20,8 +20,6 @@ ExclusiveArch:  x86_64 aarch64
 
 BuildRequires:  cargo-packaging
 BuildRequires:  clang
-BuildRequires:  clang-devel
-BuildRequires:  llvm-devel
 BuildRequires:  gcc-c++
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  pkgconfig(cairo-gobject)
