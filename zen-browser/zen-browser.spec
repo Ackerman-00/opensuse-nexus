@@ -51,7 +51,7 @@ install -d %{buildroot}%{_libdir}/zen-browser
 cp -a * %{buildroot}%{_libdir}/zen-browser/
 rm -f %{buildroot}%{_libdir}/zen-browser/removed-files
 
-install -m0755 %{_sourcedir}/zen-browser.sh %{buildroot}/usr/bin/zen-browser
+install -m0755 %{_sourcedir}/zen-browser.sh %{buildroot}%{_bindir}/zen-browser
 
 desktop-file-install --dir=%{buildroot}%{_datadir}/applications %{SOURCE2}
 
@@ -73,8 +73,11 @@ for lib in libnspr4.so libplc4.so libplds4.so \
     ln -sf %{_libdir}/$lib %{buildroot}%{_libdir}/zen-browser/$lib
 done
 
-execstack -c %{buildroot}%{_libdir}/zen-browser/libonnxruntime.so
-chrpath -d %{buildroot}%{_libdir}/zen-browser/libonnxruntime.so
+# Safeguard: Only execute stack clearance if upstream shipped libonnxruntime.so
+if [ -f "%{buildroot}%{_libdir}/zen-browser/libonnxruntime.so" ]; then
+    execstack -c %{buildroot}%{_libdir}/zen-browser/libonnxruntime.so
+    chrpath -d %{buildroot}%{_libdir}/zen-browser/libonnxruntime.so
+fi
 
 %fdupes %{buildroot}%{_libdir}/zen-browser
 
@@ -87,4 +90,3 @@ chrpath -d %{buildroot}%{_libdir}/zen-browser/libonnxruntime.so
 %{_datadir}/icons/hicolor/*/apps/zen-browser.png
 
 %changelog
-
