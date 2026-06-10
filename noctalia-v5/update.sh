@@ -2,13 +2,13 @@
 
 SPEC_FILE="noctalia-v5.spec"
 CHANGES_FILE="noctalia-v5.changes"
-GITHUB_REPO="noctalia-dev/noctalia-shell"
-BRANCH="v5"
+GITHUB_REPO="noctalia-dev/noctalia"
+BRANCH="main"
 PACKAGER="Ackerman-00 <quietcraft@gmail.com>"
 
 echo "🔍 Checking for upstream commits on $GITHUB_REPO (Branch: $BRANCH)..."
 
-# Fetch the latest commit data from the v5 branch
+# Fetch the latest commit data from the main branch
 if [ -n "$GITHUB_TOKEN" ]; then
     API_RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$GITHUB_REPO/commits/$BRANCH")
 else
@@ -45,8 +45,8 @@ sed -i "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 
 # 2. Clean up old tarballs and download the new one natively
 echo "📦 Downloading source tarball from GitHub..."
-rm -f noctalia-shell-*.tar.gz
-curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "noctalia-shell-$SHORT_COMMIT.tar.gz"
+rm -f noctalia-*.tar.gz
+curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "noctalia-$SHORT_COMMIT.tar.gz"
 
 # 3. Generate OBS changes file
 echo "📝 Generating OBS changes file..."
