@@ -1,3 +1,3 @@
 .git_modified_files.txt
-zen-browser/zen-browser.changes
-zen-browser/zen-browser.spec
+noctalia-v5/noctalia-v5.changes
+noctalia-v5/noctalia-v5.spec
