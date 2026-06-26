@@ -1,7 +1,7 @@
 # These will be automatically populated by update.sh
-%global commit          af4f5a2f086a9b4ea65e9ba393904eefedd7f11e
-%global shortcommit     af4f5a2
-%global gitdate         20260626194954
+%global commit          4dbd52489c7fc3d345a77320b9f49db778d874c4
+%global shortcommit     4dbd524
+%global gitdate         20260626202159
 
 Name:           noctalia-v5
 Version:        5.0.0^%{gitdate}git%{shortcommit}
