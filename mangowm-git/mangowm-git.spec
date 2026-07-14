@@ -3,7 +3,8 @@
 %global shortcommit     cc210ad
 %global gitdate         20260714041208
 
-%global pkg_name        mangowc
+%global pkg_name        mangowm
+%global src_name        mango
 
 Name:           %{pkg_name}-git
 Version:        0.15.2+git%{gitdate}.%{shortcommit}
@@ -13,7 +14,7 @@ Summary:        A scrollable-tiling Wayland compositor (Nexus Optimized)
 License:        MIT
 Group:          System/GUI/Other
 URL:            https://github.com/mangowm/mango
-Source0:        %{pkg_name}-%{shortcommit}.tar.gz
+Source0:        %{src_name}-%{shortcommit}.tar.gz
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -63,7 +64,7 @@ scrollable-tiling and eye-candy effects. This package tracks the
 bleeding-edge main branch.
 
 %prep
-%autosetup -n %{pkg_name}-%{commit}
+%autosetup -n %{src_name}-%{commit}
 
 %build
 %meson -Dprefix=%{_prefix} -Dsysconfdir=%{_sysconfdir}

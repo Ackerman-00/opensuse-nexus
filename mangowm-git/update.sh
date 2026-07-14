@@ -1,7 +1,7 @@
 #!/bin/bash
 
-SPEC_FILE="mangowc-git.spec"
-CHANGES_FILE="mangowc-git.changes"
+SPEC_FILE="mangowm-git.spec"
+CHANGES_FILE="mangowm-git.changes"
 GITHUB_REPO="mangowm/mango"
 PACKAGER="Ackerman-00 <quietcraft@gmail.com>"
 
@@ -38,8 +38,8 @@ sed -i -E "s/^%global gitdate.*/%global gitdate         $LATEST_DATE/" "$SPEC_FI
 sed -i -E "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 
 echo "Downloading source tarball..."
-rm -f mangowc-*.tar.gz
-curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "mangowc-$SHORT_COMMIT.tar.gz"
+rm -f mango-*.tar.gz
+curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "mango-$SHORT_COMMIT.tar.gz"
 
 echo "Generating OBS changes file..."
 FORMATTED_DATE=$(LC_ALL=C date +"%a %b %d %T UTC %Y")

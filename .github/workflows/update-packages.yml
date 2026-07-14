@@ -151,54 +151,67 @@ jobs:
             echo "All packages build successfully."
           fi
 
-      - name: Smart Sync to OBS (Anti-Bloat Method)
-        if: steps.updater.outputs.updates_made == 'true' || steps.obs_check.outputs.rebuild_needed == 'true'
+      - name: Smart Sync to OBS
         env:
           OBS_USER: ${{ secrets.OBS_USER }}
           OBS_PASS: ${{ secrets.OBS_PASS }}
         run: |
           echo "==> 🚀 Syncing packages to OBS..."
 
-          # Process updated packages with full file sync
-          if [ -f .git_modified_files.txt ]; then
-            grep '/' .git_modified_files.txt | cut -d/ -f1 | sort -u > .updated_packages.txt
-            while read pkg; do
-              if [ -n "$pkg" ] && [ -d "$pkg" ]; then
-                echo " -> Syncing package: $pkg"
-                
-                # 1. Fetch current file list from OBS
-                OBS_FILES=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -oP '(?<=<entry name=")[^"]+')
-                
-                # 2. Smart Delete: Erase files on OBS that no longer exist locally
-                for remote_file in $OBS_FILES; do
-                  if [ ! -f "$pkg/$remote_file" ] || [ "$remote_file" == "update.sh" ]; then
-                    echo "    🗑️ Deleting obsolete file from OBS: $remote_file"
-                    curl -s -X DELETE -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg/$remote_file"
-                  fi
-                done
-                
-                # 3. Upload new/current files
-                find "$pkg" -maxdepth 1 -type f ! -name "update.sh" ! -name ".*" | while read filepath; do
-                  filename=$(basename "$filepath")
-                  echo "    📤 Uploading $filename to OBS..."
-                  curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -T "$filepath" \
-                  "https://api.opensuse.org/source/home:ackerman/$pkg/$filename"
-                done
-                
-                echo " -> Triggering build for: $pkg"
-                curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
-                "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=runservice"
-              fi
-            done < .updated_packages.txt
-          fi
+          collect_pkgs() {
+            PKGS=""
+            if [ -f .git_modified_files.txt ]; then
+              PKGS="$PKGS $(grep '/' .git_modified_files.txt | cut -d/ -f1 | sort -u)"
+            fi
+            if [ -f .rebuild_packages.txt ]; then
+              PKGS="$PKGS $(cat .rebuild_packages.txt)"
+            fi
+            echo "$PKGS" | tr ' ' '\n' | sort -u
+          }
 
-          # Rebuild failed packages (no file sync needed)
-          if [ -f .rebuild_packages.txt ]; then
-            while read pkg; do
-              if [ -n "$pkg" ] && [ -d "$pkg" ]; then
-                echo " -> 🔄 Rebuilding failed package: $pkg"
-                curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
-                "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=runservice"
+          PKGS_TO_SYNC=$(collect_pkgs)
+
+          for pkg in $PKGS_TO_SYNC; do
+            if [ -z "$pkg" ] || [ ! -d "$pkg" ]; then
+              continue
+            fi
+            echo " -> Syncing package: $pkg"
+
+            OBS_FILES=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -oP '(?<=<entry name=")[^"]+')
+
+            for remote_file in $OBS_FILES; do
+              if [ ! -f "$pkg/$remote_file" ] || [ "$remote_file" == "update.sh" ]; then
+                echo "    Deleting obsolete file from OBS: $remote_file"
+                curl -s -X DELETE -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg/$remote_file"
               fi
-            done < .rebuild_packages.txt
-          fi
+            done
+
+            find "$pkg" -maxdepth 1 -type f ! -name "update.sh" ! -name ".*" | while read filepath; do
+              filename=$(basename "$filepath")
+              echo "    Uploading $filename to OBS..."
+              curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -T "$filepath" \
+              "https://api.opensuse.org/source/home:ackerman/$pkg/$filename"
+            done
+
+            echo " -> Triggering build for: $pkg"
+            curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
+            "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=runservice"
+          done
+
+          # Sync local packages that don't yet exist in OBS (new packages)
+          OBS_ALL_PKGS=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman" | grep -oP '(?<=<entry name=")[^"]+')
+          for pkg_dir in */; do
+            pkg=$(basename "$pkg_dir")
+            if [ -f "$pkg_dir"*.spec ] 2>/dev/null && ! echo "$OBS_ALL_PKGS" | grep -q "^${pkg}$"; then
+              echo " -> New local package not in OBS: $pkg"
+              find "$pkg" -maxdepth 1 -type f ! -name "update.sh" ! -name ".*" | while read filepath; do
+                filename=$(basename "$filepath")
+                echo "    Uploading $filename to OBS..."
+                curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -T "$filepath" \
+                "https://api.opensuse.org/source/home:ackerman/$pkg/$filename"
+              done
+              echo " -> Triggering build for new package: $pkg"
+              curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
+              "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=runservice"
+            fi
+          done
