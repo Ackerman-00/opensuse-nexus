@@ -141,7 +141,7 @@ jobs:
             echo "$RESULT" | grep -oP '<title>[^<]+</title>' | head -1
             exit 1
           fi
-          echo "$RESULT" | grep -oP 'package="[^"]+"' | grep -oP '"[^"]+"' | tr -d '"' > .rebuild_packages.txt
+          echo "$RESULT" | grep -oP 'package="[^"]+"' | grep -oP '"[^"]+"' | tr -d '"' | sort -u > .rebuild_packages.txt
           if [ -s .rebuild_packages.txt ]; then
             echo "rebuild_needed=true" >> $GITHUB_OUTPUT
             echo "Packages needing rebuild:"
@@ -177,7 +177,7 @@ jobs:
             fi
             echo " -> Syncing package: $pkg"
 
-            OBS_FILES=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -oP '(?<=<entry name=")[^"]+')
+            OBS_FILES=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -oP '(?<=<entry name=")[^"]+' || true)
 
             for remote_file in $OBS_FILES; do
               if [ ! -f "$pkg/$remote_file" ] || [ "$remote_file" == "update.sh" ]; then
@@ -199,7 +199,7 @@ jobs:
           done
 
           # Sync local packages that don't yet exist in OBS (new packages)
-          OBS_ALL_PKGS=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman" | grep -oP '(?<=<entry name=")[^"]+')
+          OBS_ALL_PKGS=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman" | grep -oP '(?<=<entry name=")[^"]+' || true)
           for pkg_dir in */; do
             pkg=$(basename "$pkg_dir")
             if [ -f "$pkg_dir"*.spec ] 2>/dev/null && ! echo "$OBS_ALL_PKGS" | grep -q "^${pkg}$"; then
