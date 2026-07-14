@@ -11,6 +11,7 @@ License:        MIT
 Group:          System/GUI/Other
 URL:            https://github.com/noctalia-dev/noctalia
 Source0:        %{url}/archive/%{commit}/noctalia-%{shortcommit}.tar.gz
+Source1:        stb_image_resize2.h
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -40,7 +41,6 @@ BuildRequires:  wireplumber-devel
 BuildRequires:  tomlplusplus-devel
 BuildRequires:  md4c-devel
 BuildRequires:  nlohmann_json-devel
-BuildRequires:  stb-devel
 BuildRequires:  libglvnd-devel
 
 Requires:       polkit
@@ -59,11 +59,16 @@ with no Qt or GTK dependency. This package tracks the bleeding-edge main branch 
 # The upstream tarball now extracts to noctalia-%{commit}
 %autosetup -n noctalia-%{commit}
 
+# openSUSE stb-devel is too old and doesn't ship stb_image_resize2.h
+# Bundle the header directly from upstream
+mkdir -p stb
+cp %{SOURCE1} stb/stb_image_resize2.h
+
 %build
 # Force C++23 standard to fix the std::string_view 'contains' compiler error
 # Add -Wno-unused-result to bypass strict GCC warnings, matching the Arch PKGBUILD
 export CXXFLAGS="%{optflags} -std=c++23 -Wno-unused-result"
-export CFLAGS="%{optflags}"
+export CFLAGS="%{optflags} -I."
 
 %meson -Db_ndebug=true -Dtests=disabled
 %meson_build
