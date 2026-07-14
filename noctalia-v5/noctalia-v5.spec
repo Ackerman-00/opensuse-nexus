@@ -39,7 +39,7 @@ BuildRequires:  jemalloc-devel
 BuildRequires:  wireplumber-devel
 BuildRequires:  tomlplusplus-devel
 BuildRequires:  md4c-devel
-BuildRequires:  json-devel
+BuildRequires:  nlohmann_json-devel
 BuildRequires:  stb-devel
 BuildRequires:  libglvnd-devel
 
