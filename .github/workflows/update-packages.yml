@@ -131,24 +131,16 @@ jobs:
           OBS_PASS: ${{ secrets.OBS_PASS }}
         run: |
           echo "==> Phase 3: Checking OBS Build Status..."
-          REBUILD=""
-          for dir in */; do
-            pkg="${dir%/}"
-            [ -f "$pkg/$pkg.spec" ] || continue
-            RESULT=$(curl -s -u "$OBS_USER:$OBS_PASS" \
-              "https://api.opensuse.org/build/home:ackerman/openSUSE_Tumbleweed/x86_64/_buildresult?package=$pkg")
-            CODE=$(echo "$RESULT" | grep -oP 'code="[^"]+"' | head -1 | grep -oP '"[^"]+"' | tr -d '"')
-            echo "  $pkg: $CODE"
-            if [ "$CODE" = "failed" ] || [ "$CODE" = "broken" ] || [ "$CODE" = "unresolvable" ]; then
-              REBUILD="$REBUILD $pkg"
-            fi
-          done
-          if [ -n "$REBUILD" ]; then
-            echo "$REBUILD" | tr ' ' '\n' | tail -n +2 > .rebuild_packages.txt
+          RESULT=$(curl -s -u "$OBS_USER:$OBS_PASS" \
+            "https://api.opensuse.org/build/home:ackerman/_result?view=status&code=failed,broken,unresolvable")
+          echo "$RESULT" | grep -oP 'package="[^"]+"' | grep -oP '"[^"]+"' | tr -d '"' > .rebuild_packages.txt
+          if [ -s .rebuild_packages.txt ]; then
             echo "rebuild_needed=true" >> $GITHUB_OUTPUT
-            echo "Packages needing rebuild:$REBUILD"
+            echo "Packages needing rebuild:"
+            cat .rebuild_packages.txt
           else
             echo "rebuild_needed=false" >> $GITHUB_OUTPUT
+            echo "All packages build successfully."
           fi
 
       - name: Smart Sync to OBS (Anti-Bloat Method)
