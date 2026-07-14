@@ -33,11 +33,17 @@ BuildRequires:  pkgconfig(libwebp)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  polkit-devel
 BuildRequires:  pkgconfig(librsvg-2.0)
-# New dependencies added per upstream v5 announcement
 BuildRequires:  pkgconfig(libqalculate)
 BuildRequires:  pkgconfig(libxml-2.0)
-# Missing dependency that causes Meson to abort
 BuildRequires:  jemalloc-devel
+BuildRequires:  wireplumber-devel
+BuildRequires:  tomlplusplus-devel
+BuildRequires:  md4c-devel
+BuildRequires:  json-devel
+BuildRequires:  stb-devel
+BuildRequires:  libglvnd-devel
+
+Requires:       polkit
 
 Conflicts:      noctalia
 Conflicts:      noctalia-bin
@@ -59,7 +65,7 @@ with no Qt or GTK dependency. This package tracks the bleeding-edge main branch 
 export CXXFLAGS="%{optflags} -std=c++23 -Wno-unused-result"
 export CFLAGS="%{optflags}"
 
-%meson -Db_ndebug=true
+%meson -Db_ndebug=true -Dtests=disabled
 %meson_build
 
 %install
@@ -70,5 +76,7 @@ export CFLAGS="%{optflags}"
 %doc README.md
 %{_bindir}/noctalia
 %{_datadir}/noctalia/
+%{_datadir}/applications/dev.noctalia.Noctalia.desktop
+%{_datadir}/icons/hicolor/scalable/apps/noctalia.svg
 
 %changelog
