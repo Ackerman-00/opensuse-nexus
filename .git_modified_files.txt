@@ -1,3 +1,4 @@
 .git_modified_files.txt
-noctalia-v5/noctalia-v5.changes
-noctalia-v5/noctalia-v5.spec
+mangowc-git/mangowc-git.changes
+mangowc-git/mangowc-git.spec
+scenefx/scenefx.spec

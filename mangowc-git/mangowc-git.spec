@@ -1,7 +1,7 @@
 # These will be automatically populated by update.sh
-%global commit          0000000000000000000000000000000000000000
-%global shortcommit      0000000
-%global gitdate         00000000000000
+%global commit          cc210ad8a4fabadb1c609ff5d30abcbc24c05ea1
+%global shortcommit     cc210ad
+%global gitdate         20260714041208
 
 %global pkg_name        mangowc
 

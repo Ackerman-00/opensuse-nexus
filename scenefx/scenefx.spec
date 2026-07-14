@@ -2,7 +2,7 @@
 %global version_dot 0.5
 
 Name:           scenefx
-Version:        0.5.0
+Version:        0.5
 Release:        0
 Summary:        Drop-in replacement for wlroots scene API with eye-candy effects
 License:        MIT
