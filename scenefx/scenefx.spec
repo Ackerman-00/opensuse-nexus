@@ -4,6 +4,7 @@
 Name:           scenefx
 Version:        0.5
 Release:        0
+ExclusiveArch:  x86_64 aarch64
 Summary:        Drop-in replacement for wlroots scene API with eye-candy effects
 License:        MIT
 URL:            https://github.com/wlrfx/scenefx

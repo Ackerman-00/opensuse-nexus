@@ -11,6 +11,7 @@
 
 Name:           wlroots
 Version:        %{ver_suffix}.%{patch_ver}
+ExclusiveArch:  x86_64 aarch64
 Release:        0
 Summary:        Modular Wayland compositor library
 License:        MIT
