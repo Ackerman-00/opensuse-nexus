@@ -42,8 +42,14 @@ BuildRequires:  tomlplusplus-devel
 BuildRequires:  md4c-devel
 BuildRequires:  nlohmann_json-devel
 BuildRequires:  libglvnd-devel
+BuildRequires:  pkgconfig(stb)
+BuildRequires:  fdupes
+BuildRequires:  hicolor-icon-theme
 
 Requires:       polkit
+Requires:       qalculate
+
+Recommends:     upower
 
 Conflicts:      noctalia
 Conflicts:      noctalia-bin
@@ -59,10 +65,14 @@ with no Qt or GTK dependency. This package tracks the bleeding-edge main branch 
 # The upstream tarball now extracts to noctalia-%{commit}
 %autosetup -n noctalia-%{commit}
 
-# openSUSE stb-devel is too old and doesn't ship stb_image_resize2.h
-# Bundle the header directly from upstream
+# openSUSE stb-devel is too old and doesn't ship stb_image_resize2.h or stb_image_write.h
+# Bundle the header directly from upstream (CXXFLAGS adds -I. so compiler finds it)
 mkdir -p stb
 cp %{SOURCE1} stb/stb_image_resize2.h
+
+# Meson's cc.has_header() only searches system include paths, not the source root.
+# We bundle stb ourselves, so comment out the error lines to bypass the checks.
+sed -i '/^  error.*stb/s/^/#/' meson.build
 
 %build
 # Force C++23 standard to fix the std::string_view 'contains' compiler error
@@ -75,6 +85,20 @@ export CFLAGS="%{optflags} -I."
 
 %install
 %meson_install
+
+find %{buildroot}%{_datadir}/noctalia/assets/templates \
+	-type f -name '*.sh' \
+	-exec sed -i '1s|^#!/usr/bin/env bash$|#!/usr/bin/bash|' {} +
+
+find %{buildroot}%{_datadir}/noctalia/assets/templates \
+	-type f -name '*.py' \
+	-exec sed -i '1s|^#!/usr/bin/env python3$|#!/usr/bin/python3|' {} +
+
+find %{buildroot}%{_datadir}/noctalia/assets/templates \
+	-type f \( -name '*.sh' -o -name '*.py' \) \
+	-exec chmod 0755 {} +
+
+%fdupes %{buildroot}%{_datadir}
 
 %files
 %license LICENSE
