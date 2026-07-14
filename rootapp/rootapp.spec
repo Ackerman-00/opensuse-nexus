@@ -65,6 +65,11 @@ chmod go-w squashfs-root
 install -dm755 %{buildroot}/opt/rootapp
 cp -ar squashfs-root/* %{buildroot}/opt/rootapp/
 
+# Set SUID on chrome-sandbox if present (Electron sandbox)
+if [ -f "%{buildroot}/opt/rootapp/chrome-sandbox" ]; then
+    chmod 4755 %{buildroot}/opt/rootapp/chrome-sandbox
+fi
+
 install -dm755 %{buildroot}%{_bindir}
 cat > %{buildroot}%{_bindir}/rootapp <<'WRAPPER_EOF'
 #!/bin/sh
@@ -72,10 +77,6 @@ export APPDIR="/opt/rootapp"
 exec /opt/rootapp/AppRun "$@"
 WRAPPER_EOF
 chmod 755 %{buildroot}%{_bindir}/rootapp
-
-if [ -f "%{buildroot}/opt/rootapp/chrome-sandbox" ]; then
-    chmod 4755 %{buildroot}/opt/rootapp/chrome-sandbox
-fi
 
 install -Dm644 squashfs-root/Root.png %{buildroot}%{_datadir}/pixmaps/rootapp.png
 install -Dm644 squashfs-root/Root.png %{buildroot}%{_datadir}/icons/hicolor/256x256/apps/rootapp.png
@@ -95,12 +96,8 @@ MimeType=x-scheme-handler/rootapp;
 DESKTOP_EOF
 
 %files
-%license /opt/rootapp/LICENSE
 %{_bindir}/rootapp
-%dir /opt/rootapp
-%exclude /opt/rootapp/chrome-sandbox
-/opt/rootapp/*
-%attr(4755, root, root) /opt/rootapp/chrome-sandbox
+/opt/rootapp/
 %{_datadir}/applications/rootapp.desktop
 %{_datadir}/icons/hicolor/*/apps/rootapp.png
 %{_datadir}/pixmaps/rootapp.png

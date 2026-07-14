@@ -25,8 +25,12 @@ CURRENT_COMMIT=$(grep -E "^%global commit" "$SPEC_FILE" | awk '{print $3}')
 SHORT_COMMIT=${LATEST_COMMIT:0:7}
 LATEST_DATE=$(echo "$LATEST_DATE_RAW" | sed 's/[-T:Z]//g')
 
+echo "Downloading source tarball ($SHORT_COMMIT)..."
+rm -f mango-*.tar.gz
+curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "mango-$SHORT_COMMIT.tar.gz"
+
 if [ "$CURRENT_COMMIT" == "$LATEST_COMMIT" ]; then
-    echo "Package is already at the latest commit ($SHORT_COMMIT). No update needed."
+    echo "Package is already at the latest commit ($SHORT_COMMIT). Tarball downloaded for OBS sync."
     exit 0
 fi
 
@@ -36,10 +40,6 @@ sed -i -E "s/^%global commit.*/%global commit          $LATEST_COMMIT/" "$SPEC_F
 sed -i -E "s/^%global shortcommit.*/%global shortcommit     $SHORT_COMMIT/" "$SPEC_FILE"
 sed -i -E "s/^%global gitdate.*/%global gitdate         $LATEST_DATE/" "$SPEC_FILE"
 sed -i -E "s/^Release:.*/Release:        0/" "$SPEC_FILE"
-
-echo "Downloading source tarball..."
-rm -f mango-*.tar.gz
-curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "mango-$SHORT_COMMIT.tar.gz"
 
 echo "Generating OBS changes file..."
 FORMATTED_DATE=$(LC_ALL=C date +"%a %b %d %T UTC %Y")
