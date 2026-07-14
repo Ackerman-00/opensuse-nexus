@@ -67,7 +67,7 @@ bleeding-edge main branch.
 %autosetup -n %{src_name}-%{commit}
 
 %build
-%meson -Dprefix=%{_prefix} -Dsysconfdir=%{_sysconfdir}
+%meson
 %meson_build
 
 %install
