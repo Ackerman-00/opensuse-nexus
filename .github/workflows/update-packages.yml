@@ -131,8 +131,16 @@ jobs:
           OBS_PASS: ${{ secrets.OBS_PASS }}
         run: |
           echo "==> Phase 3: Checking OBS Build Status..."
-          RESULT=$(curl -s -u "$OBS_USER:$OBS_PASS" \
-            "https://api.opensuse.org/build/home:ackerman/_result?view=status&code=failed,broken,unresolvable")
+          RESULT=$(curl -s -S -u "$OBS_USER:$OBS_PASS" -G "https://api.opensuse.org/build/home:ackerman/_result" \
+            --data-urlencode "view=status" \
+            --data-urlencode "code=failed" \
+            --data-urlencode "code=broken" \
+            --data-urlencode "code=unresolvable")
+          if echo "$RESULT" | grep -q '<html'; then
+            echo "ERROR: OBS API returned non-XML response (auth failure?)"
+            echo "$RESULT" | grep -oP '<title>[^<]+</title>' | head -1
+            exit 1
+          fi
           echo "$RESULT" | grep -oP 'package="[^"]+"' | grep -oP '"[^"]+"' | tr -d '"' > .rebuild_packages.txt
           if [ -s .rebuild_packages.txt ]; then
             echo "rebuild_needed=true" >> $GITHUB_OUTPUT
