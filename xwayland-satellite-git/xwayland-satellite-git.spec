@@ -27,6 +27,7 @@ BuildRequires:  pkgconfig(fontconfig)
 BuildRequires:  pkgconfig(wayland-client)
 BuildRequires:  pkgconfig(wayland-cursor)
 BuildRequires:  pkgconfig(wayland-server)
+BuildRequires:  pkgconfig(xcb)
 BuildRequires:  pkgconfig(xcb-cursor)
 
 # OpenSUSE specific naming architecture

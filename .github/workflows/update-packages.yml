@@ -5,21 +5,28 @@ on:
     - cron: '0 */23 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
 jobs:
   update-packages:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
 
       - name: Install System Dependencies
         run: sudo apt-get update && sudo apt-get install -y libxml2-utils jq curl
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - run: pip install requests
 
@@ -77,16 +84,20 @@ jobs:
                       new_content = content
                       changed = False
                       
-                      if current_tag and latest_tag != current_tag:
-                          new_content = re.sub(r'(%global\s+tag\s+).+', rf'\g<1>{latest_tag}', new_content)
-                          changed = True
-                          print(f"  -> [UPDATE] {repo} changed from {current_tag} to {latest_tag}!")
-                      elif current_ver and latest_ver != current_ver:
-                          new_content = re.sub(r'(^Version:\s+).+', rf'\g<1>{latest_ver}', new_content, flags=re.MULTILINE)
-                          changed = True
-                          print(f"  -> [UPDATE] {repo} changed from {current_ver} to {latest_ver}!")
-                      else:
-                          print(f"  -> [OK] {repo} is already on latest.")
+                      if current_tag:
+                          if latest_tag != current_tag:
+                              new_content = re.sub(r'(%global\s+tag\s+).+', rf'\g<1>{latest_tag}', new_content)
+                              changed = True
+                              print(f"  -> [UPDATE] {repo} changed from {current_tag} to {latest_tag}!")
+                          else:
+                              print(f"  -> [OK] {repo} is already on latest ({current_tag}).")
+                      elif current_ver:
+                          if latest_ver != current_ver:
+                              new_content = re.sub(r'(^Version:\s+).+', rf'\g<1>{latest_ver}', new_content, flags=re.MULTILINE)
+                              changed = True
+                              print(f"  -> [UPDATE] {repo} changed from {current_ver} to {latest_ver}!")
+                          else:
+                              print(f"  -> [OK] {repo} is already on latest ({current_ver}).")
                           
                       if changed:
                           spec.write_text(new_content, encoding='utf-8')

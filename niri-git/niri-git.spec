@@ -26,6 +26,7 @@ BuildRequires:  pkgconfig(cairo-gobject)
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(egl)
 BuildRequires:  pkgconfig(gbm)
+BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(libdisplay-info)
 BuildRequires:  pkgconfig(libinput)
 BuildRequires:  pkgconfig(libseat)
@@ -43,6 +44,8 @@ Requires:       xwayland-satellite-git
 Requires:       Mesa-dri
 Requires:       Mesa-libEGL1
 Requires:       libwayland-server0
+
+Requires:       xdg-desktop-portal
 
 Recommends:     xdg-desktop-portal-gtk
 Recommends:     xdg-desktop-portal-gnome
