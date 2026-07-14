@@ -4,19 +4,21 @@
 %global __provides_exclude_from ^/opt/rootapp/.*$
 
 Name:           rootapp
-Version:        20260303
+Version:        0.9.118
 Release:        0
 Summary:        A new Discord alternative, designed for gaming communities and large online groups
 
 License:        Proprietary
 URL:            https://www.rootapp.com
 Source0:        https://installer.rootapp.com/installer/Linux/X64/Root.AppImage
+# sha256: 7d0ad57e26fd235a926283224b23e1556536920c8a28e04b3ba532dc61dc6c92
 
 ExclusiveArch:  x86_64
 
 BuildRequires:  binutils
 BuildRequires:  squashfs
 BuildRequires:  hicolor-icon-theme
+BuildRequires:  python3
 
 Requires:       gtk3
 Requires:       mozilla-nss
@@ -75,11 +77,8 @@ if [ -f "%{buildroot}/opt/rootapp/chrome-sandbox" ]; then
     chmod 4755 %{buildroot}/opt/rootapp/chrome-sandbox
 fi
 
-ICON=$(find squashfs-root -maxdepth 1 -name "*.png" -o -name "*.svg" 2>/dev/null | head -1)
-if [ -n "$ICON" ]; then
-    install -Dm644 "$ICON" %{buildroot}%{_datadir}/pixmaps/rootapp.png
-    install -Dm644 "$ICON" %{buildroot}%{_datadir}/icons/hicolor/256x256/apps/rootapp.png
-fi
+install -Dm644 squashfs-root/Root.png %{buildroot}%{_datadir}/pixmaps/rootapp.png
+install -Dm644 squashfs-root/Root.png %{buildroot}%{_datadir}/icons/hicolor/256x256/apps/rootapp.png
 
 install -dm755 %{buildroot}%{_datadir}/applications/
 cat > %{buildroot}%{_datadir}/applications/rootapp.desktop <<DESKTOP_EOF
