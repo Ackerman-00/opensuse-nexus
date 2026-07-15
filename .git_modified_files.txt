@@ -1,4 +1,5 @@
 .git_modified_files.txt
-mangowc-git/mangowc-git.changes
-mangowc-git/mangowc-git.spec
-scenefx/scenefx.spec
+mangowm-git/mangowm-git.changes
+mangowm-git/mangowm-git.spec
+zen-browser/zen-browser.changes
+zen-browser/zen-browser.spec
