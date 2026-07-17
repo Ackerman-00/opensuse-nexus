@@ -4,14 +4,14 @@
 %global __provides_exclude_from ^/opt/rootapp/.*$
 
 Name:           rootapp
-Version:        0.9.118
+Version:        19.2.5
 Release:        0
 Summary:        A new Discord alternative, designed for gaming communities and large online groups
 
 License:        Proprietary
 URL:            https://www.rootapp.com
 Source0:        https://installer.rootapp.com/installer/Linux/X64/Root.AppImage
-# sha256: 7d0ad57e26fd235a926283224b23e1556536920c8a28e04b3ba532dc61dc6c92
+# sha256: d50d01eda97876ccb965470c982947b56ac649fa497825449efe4952b06d2526
 
 ExclusiveArch:  x86_64
 
