@@ -1,3 +1,5 @@
 .git_modified_files.txt
 mangowm-git/mangowm-git.changes
 mangowm-git/mangowm-git.spec
+rootapp/rootapp.changes
+rootapp/rootapp.spec
