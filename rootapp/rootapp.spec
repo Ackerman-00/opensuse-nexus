@@ -11,7 +11,7 @@ Summary:        A new Discord alternative, designed for gaming communities and l
 License:        Proprietary
 URL:            https://www.rootapp.com
 Source0:        https://installer.rootapp.com/installer/Linux/X64/Root.AppImage
-# sha256: 3cab1a0fb3283478c0e7c14530e061ff28f7a288df963bc580bcc069d191e59b
+# sha256: 2a9e9f5c2557b5567ea3494911388bf813786e44d72f12ecac65ed00d938f33c
 
 ExclusiveArch:  x86_64
 

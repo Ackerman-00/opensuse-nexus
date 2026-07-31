@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Jul 31 00:01:45 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Update to upstream version 1.13.4
+- Switch to native system Electron dependency
+
+-------------------------------------------------------------------
 Thu May 07 01:24:41 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Update to upstream version 1.12.7
