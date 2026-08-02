@@ -51,6 +51,7 @@ Or **[browse all packages and their builds online](https://build.opensuse.org/pr
 | **opencode-desktop** | Open source AI coding agent | `sudo zypper install opencode-desktop` |
 | **rootapp** | Run GUI apps as root via Polkit | `sudo zypper install rootapp` |
 | **scenefx** | Drop-in wlroots scene API replacement with eye-candy effects | `sudo zypper install scenefx` |
+| **stb** | Single-file public domain libraries for C/C++ | `sudo zypper install stb-devel` |
 | **vesktop** | Custom Discord client with Vencord preinstalled | `sudo zypper install vesktop` |
 | **wlroots** | Modular Wayland compositor library | `sudo zypper install wlroots` |
 | **xwayland-satellite-git** | Rootless Xwayland integration for Wayland compositors | `sudo zypper install xwayland-satellite-git` |
