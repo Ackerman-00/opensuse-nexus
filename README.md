@@ -44,6 +44,8 @@ Or **[browse all packages and their builds online](https://build.opensuse.org/pr
 | **localsend** | Open source cross-platform alternative to AirDrop | `sudo zypper install localsend` |
 | **mangowm-git** | Scrollable-tiling Wayland compositor (Nexus optimized) | `sudo zypper install mangowm-git` |
 | **matugen** | Material You color generation tool | `sudo zypper install matugen` |
+| **noctalia** | Sleek minimal Wayland desktop shell | `sudo zypper install noctalia` |
+| **noctalia-greeter** | Greeter for Noctalia (greetd login screen) | `sudo zypper install noctalia-greeter` |
 | **niri-git** | Scrollable-tiling Wayland compositor | `sudo zypper install niri-git` |
 | **obsidian** | Knowledge base for plain-text Markdown notes | `sudo zypper install obsidian` |
 | **opencode-desktop** | Open source AI coding agent | `sudo zypper install opencode-desktop` |
