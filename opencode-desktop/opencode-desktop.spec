@@ -12,6 +12,7 @@ License:        MIT
 Group:          Development/Tools/Other
 URL:            https://opencode.ai
 Source0:        https://github.com/anomalyco/opencode/releases/download/v%{version}/opencode-desktop-linux-amd64.deb
+Source1:        opencode-desktop-rpmlintrc
 
 ExclusiveArch:  x86_64
 BuildRequires:  python3
