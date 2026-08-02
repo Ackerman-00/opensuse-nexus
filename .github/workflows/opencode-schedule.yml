@@ -95,6 +95,41 @@ jobs:
             build fixes/patches upstream. NEVER trust a version, URL, checksum, or fix
             you have not verified online.
 
+            NO-CHURN VERIFICATION (MANDATORY, applies to every step below). You
+            must NEVER push a version or commit to OBS if it was already pushed
+            before. Past runs repeatedly re-synced the same upstream commit to OBS
+            (e.g. niri-git, xwayland-satellite-git), generating churn commits and
+            useless rebuilds. Before bumping or syncing ANY package:
+              a. CHECK GIT LOG FIRST. For the package in question run
+                 `git log --oneline -15 -- <pkg>/` and `git show <most-recent
+                 auto-update commit> -- <pkg>/`. If a previous auto-update commit
+                 references the SAME upstream commit SHA / tag / version you are
+                 about to push, STOP: do not bump, do not add a .changes entry,
+                 do not push. The package is already current.
+              b. CHECK OBS FOR WHAT WAS ALREADY UPLOADED. OBS is authoritative
+                 for "what has been pushed":
+                 GET https://api.opensuse.org/source/home:ackerman/<pkg> (file
+                 list) and GET .../<pkg>/<spec> (contents, to read its
+                 %global commit / Version). If OBS already carries the same
+                 spec commit/version, do NOT re-upload or trigger a rebuild
+                 unless that build is actually failing.
+              c. A .changes entry is only allowed when the version/commit
+                 actually changed. Never add a "Nightly sync" entry for a
+                 commit already in git log or already on OBS.
+              d. FIX BROKEN UPDATERS, don't work around them. If update.sh
+                 regenerates churn (same commit, new .changes entry) because of
+                 a flawed up-to-date guard, fix the script so it exits 0 when
+                 the spec's commit already equals upstream HEAD. The correct
+                 guard is a pure commit-SHA comparison - never require local
+                 artifact files (tarballs, vendor.tar.xz, cargo_config) to
+                 exist: they are gitignored and never present in CI checkouts.
+                 Apply the same fix to every update.sh with the same flaw.
+              e. AUDIT REPEATED AUTO-UPDATE COMMITS. If you see 3+ consecutive
+                 auto-update commits touching only .changes files for the same
+                 commit SHA, treat it as a bug in the pipeline/update.sh, fix
+                 the root cause, and collapse the duplicate changelog entries
+                 so only one entry exists per actual update.
+
             Then work autonomously, in this priority order:
 
             1. FIX FAILED OBS BUILDS (highest priority).
