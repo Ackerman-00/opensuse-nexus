@@ -23,6 +23,9 @@ jobs:
       - name: Install System Dependencies
         run: sudo apt-get update && sudo apt-get install -y libxml2-utils jq curl
 
+      - name: Install Rust toolchain (for cargo vendor)
+        uses: dtolnay/rust-toolchain@stable
+
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
@@ -169,13 +172,36 @@ jobs:
             echo "$PKGS" | tr ' ' '\n' | sort -u
           }
 
-          PKGS_TO_SYNC=$(collect_pkgs)
-
-          for pkg in $PKGS_TO_SYNC; do
-            if [ -z "$pkg" ] || [ ! -d "$pkg" ]; then
-              continue
+          # Create the package in OBS first, otherwise PUT uploads fail with
+          # "<status code="unknown_package">". Package creation is idempotent.
+          ensure_package() {
+            local pkg="$1"
+            if curl -s -u "$OBS_USER:$OBS_PASS" \
+                 "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -q 'unknown_package'; then
+              echo " -> Creating package $pkg in OBS..."
+              curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
+                "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=createpackage"
             fi
-            echo " -> Syncing package: $pkg"
+          }
+
+          # Trigger a rebuild. Packages with a _service need runservice to fetch
+          # remote sources first; packages without one just need a plain rebuild.
+          trigger_build() {
+            local pkg="$1"
+            if [ -f "$pkg/_service" ]; then
+              echo " -> Running services for: $pkg"
+              curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
+                "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=runservice"
+            else
+              echo " -> Triggering rebuild for: $pkg"
+              curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
+                "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=rebuild"
+            fi
+          }
+
+          sync_files() {
+            local pkg="$1"
+            ensure_package "$pkg"
 
             OBS_FILES=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -oP '(?<=<entry name=")[^"]+' || true)
 
@@ -193,9 +219,17 @@ jobs:
               "https://api.opensuse.org/source/home:ackerman/$pkg/$filename"
             done
 
-            echo " -> Triggering build for: $pkg"
-            curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
-            "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=runservice"
+            trigger_build "$pkg"
+          }
+
+          PKGS_TO_SYNC=$(collect_pkgs)
+
+          for pkg in $PKGS_TO_SYNC; do
+            if [ -z "$pkg" ] || [ ! -d "$pkg" ]; then
+              continue
+            fi
+            echo " -> Syncing package: $pkg"
+            sync_files "$pkg"
           done
 
           # Sync local packages that don't yet exist in OBS (new packages)
@@ -204,14 +238,6 @@ jobs:
             pkg=$(basename "$pkg_dir")
             if [ -f "$pkg_dir"*.spec ] 2>/dev/null && ! echo "$OBS_ALL_PKGS" | grep -q "^${pkg}$"; then
               echo " -> New local package not in OBS: $pkg"
-              find "$pkg" -maxdepth 1 -type f ! -name "update.sh" ! -name ".*" | while read filepath; do
-                filename=$(basename "$filepath")
-                echo "    Uploading $filename to OBS..."
-                curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -T "$filepath" \
-                "https://api.opensuse.org/source/home:ackerman/$pkg/$filename"
-              done
-              echo " -> Triggering build for new package: $pkg"
-              curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
-              "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=runservice"
+              sync_files "$pkg"
             fi
           done

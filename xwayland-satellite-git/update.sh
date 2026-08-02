@@ -25,9 +25,13 @@ CURRENT_COMMIT=$(grep -E "^%global commit" "$SPEC_FILE" | awk '{print $3}')
 SHORT_COMMIT=${LATEST_COMMIT:0:7}
 LATEST_DATE=$(echo "$LATEST_DATE_RAW" | sed 's/[-T:Z]//g')
 
-if [ "$CURRENT_COMMIT" == "$LATEST_COMMIT" ]; then
+if [ "$CURRENT_COMMIT" == "$LATEST_COMMIT" ] && [ -f "xwayland-satellite-$SHORT_COMMIT.tar.gz" ] && [ -f "vendor.tar.xz" ] && [ -f "cargo_config" ]; then
     echo "✅ Package is already at the latest commit ($SHORT_COMMIT). No update needed."
     exit 0
+fi
+
+if [ "$CURRENT_COMMIT" == "$LATEST_COMMIT" ]; then
+    echo "✅ Already at latest commit ($SHORT_COMMIT) but source artifacts missing; regenerating for OBS sync."
 fi
 
 echo "🚀 Update found: ${CURRENT_COMMIT:0:7} -> $SHORT_COMMIT"
