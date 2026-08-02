@@ -39,11 +39,14 @@ Or **[browse all packages and their builds online](https://build.opensuse.org/pr
 
 | Package | Description | Install |
 |---|---|---|
+| **bibata-cursor-theme** | Open source, compact, material designed cursor set | `sudo zypper install bibata-cursor-theme` |
 | **fluxer** | Free and open source messaging & VoIP platform | `sudo zypper install fluxer` |
+| **localsend** | Open source cross-platform alternative to AirDrop | `sudo zypper install localsend` |
 | **mangowm-git** | Scrollable-tiling Wayland compositor (Nexus optimized) | `sudo zypper install mangowm-git` |
 | **matugen** | Material You color generation tool | `sudo zypper install matugen` |
 | **niri-git** | Scrollable-tiling Wayland compositor | `sudo zypper install niri-git` |
 | **obsidian** | Knowledge base for plain-text Markdown notes | `sudo zypper install obsidian` |
+| **opencode-desktop** | Open source AI coding agent | `sudo zypper install opencode-desktop` |
 | **rootapp** | Run GUI apps as root via Polkit | `sudo zypper install rootapp` |
 | **scenefx** | Drop-in wlroots scene API replacement with eye-candy effects | `sudo zypper install scenefx` |
 | **vesktop** | Custom Discord client with Vencord preinstalled | `sudo zypper install vesktop` |
