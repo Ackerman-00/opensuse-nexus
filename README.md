@@ -16,7 +16,7 @@ Curated packages optimized for minimal Wayland compositors (Niri, Mangowm) and h
 
 ```bash
 # 1. Add the OBS repository
-sudo zypper addrepo --refresh "https://download.opensuse.org/repositories/home:/ackerman/openSUSE_Tumbleweed/" nexus
+sudo zypper addrepo --refresh "https://download.opensuse.org/repositories/home:/ackerman/openSUSE_Tumbleweed/home:ackerman.repo" nexus
 
 # 2. Install a package (example)
 sudo zypper install zen-browser
