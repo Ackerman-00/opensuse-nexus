@@ -234,12 +234,27 @@ jobs:
             sync_files "$pkg"
           done
 
-          # Sync local packages that don't yet exist in OBS (new packages)
+          # Sync local packages that don't yet exist in OBS (new packages),
+          # or that exist in OBS but have an empty source directory (e.g. a
+          # package stub created by an earlier interrupted _meta PUT whose
+          # file upload never completed -> OBS reports these as "broken").
           OBS_ALL_PKGS=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman" | grep -oP '(?<=<entry name=")[^"]+' || true)
           for pkg_dir in */; do
             pkg=$(basename "$pkg_dir")
-            if [ -f "$pkg_dir"*.spec ] 2>/dev/null && ! echo "$OBS_ALL_PKGS" | grep -q "^${pkg}$"; then
-              echo " -> New local package not in OBS: $pkg"
-              sync_files "$pkg"
+            if [ ! -f "$pkg_dir"*.spec ] 2>/dev/null; then
+              continue
             fi
+            if echo "$OBS_ALL_PKGS" | grep -q "^${pkg}$"; then
+              # Package already exists in OBS: only re-sync if its source
+              # directory is empty (broken build due to missing files).
+              OBS_FILES=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -oP '(?<=<entry name=")[^"]+' || true)
+              if [ -n "$OBS_FILES" ]; then
+                echo " -> OK, package $pkg already synced in OBS"
+                continue
+              fi
+              echo " -> Package $pkg exists in OBS but has no files; re-syncing"
+            else
+              echo " -> New local package not in OBS: $pkg"
+            fi
+            sync_files "$pkg"
           done
