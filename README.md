@@ -30,8 +30,6 @@ zypper install zen-browser
 > zypper addrepo https://download.opensuse.org/repositories/home:ackerman/openSUSE_Slowroll/home:ackerman.repo
 > zypper refresh
 > ```
->
-> For Leap, replace the release segment with your version (e.g. `openSUSE_Leap_16.0`), or grab the URL from the project's *Download repository* section.
 
 ### List available packages
 
