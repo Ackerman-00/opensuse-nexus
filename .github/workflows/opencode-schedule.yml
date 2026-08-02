@@ -27,7 +27,7 @@ jobs:
       actions: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.1.0
         with:
           persist-credentials: false
 
@@ -55,25 +55,40 @@ jobs:
             - Each package lives in its own directory with a .spec file, a .changes
               file (openSUSE changelog), often an update.sh (an upstream-check script)
               and a _service file. update-packages.yml (GitHub Actions, "Nexus
-              Auto-Updater (OBS Pipeline)") runs every ~23h: it runs update.sh for
+              Auto-Updater (OBS Pipeline)") runs every 2 hours (cron '0 */2 * * *',
+              minute 0), i.e. 20 minutes before this workflow: it runs update.sh for
               packages that have one and scans the rest against GitHub release tags,
               bumping spec versions and committing to main directly, then syncs changed
               packages to OBS via its API (using OBS_USER/OBS_PASS) and triggers a
               rebuild.
             - Builds happen in OBS (project home:ackerman), triggered per-package when
-              files are uploaded (cmd=runservice) or when a rebuild is requested.
+              files are uploaded (cmd=runservice) or when a rebuild is requested
+              (cmd=rebuild, valid on /source/<pkg> and /build/<project>).
             - OBS API v2 endpoints (authenticate with the OBS_USER and OBS_PASS
-              environment variables, e.g. `curl -u "$OBS_USER:$OBS_PASS" ...`):
+              environment variables via HTTP Basic auth, e.g.
+              `curl -s -u "$OBS_USER:$OBS_PASS" ...`; responses are XML):
+                List packages:   GET https://api.opensuse.org/source/home:ackerman
                 Build results:  GET https://api.opensuse.org/build/home:ackerman/_result?view=status
                                 (add &code=failed&code=broken&code=unresolvable to list failures;
                                  filter per-package by appending &package=<name>)
                 Package files:  GET  https://api.opensuse.org/source/home:ackerman/<pkg>
+                Package info:   GET  https://api.opensuse.org/source/home:ackerman/<pkg>?view=info
+                                (source version + md5sums of every uploaded file)
                 Upload file:    PUT  https://api.opensuse.org/source/home:ackerman/<pkg>/<filename> -T <file>
                 Delete file:    DELETE https://api.opensuse.org/source/home:ackerman/<pkg>/<filename>
                 Trigger build:  POST https://api.opensuse.org/source/home:ackerman/<pkg>?cmd=runservice
+                Rebuild:        POST https://api.opensuse.org/source/home:ackerman/<pkg>?cmd=rebuild
+                Wait service:   POST https://api.opensuse.org/source/home:ackerman/<pkg>?cmd=waitservice
+                                (blocks until a service run finished; HTTP 200 = success)
                 Build log:      GET https://api.opensuse.org/build/home:ackerman/<repo>/<arch>/<pkg>/_log
+                                (<repo>/<arch> come from the _result XML, e.g.
+                                 openSUSE_Tumbleweed/x86_64)
+                Build deps:     GET https://api.opensuse.org/build/home:ackerman/<repo>/<arch>/_builddepinfo
+                                (shows the actual build dependencies OBS resolved for
+                                 every package - the ground truth for the dependency audit)
               Build states you care about: succeeded / failed / broken / unresolvable /
-              disabled / scheduled. Inspect the _log to diagnose failures.
+              disabled / excluded / building / scheduled / unbroken. Inspect the _log
+              to diagnose failures.
             - TOKENS: `git push` authenticates with the OpenCode App token, which has
               contents + workflows write, so you CAN modify .github/workflows/* and push
               straight to main. `gh` commands use the runner's GITHUB_TOKEN, which has
@@ -94,6 +109,12 @@ jobs:
             200 (`curl -sI`), checksums match (download + sha256sum), and look for known
             build fixes/patches upstream. NEVER trust a version, URL, checksum, or fix
             you have not verified online.
+            - GITHUB API RATE LIMITS: unauthenticated api.github.com requests are
+              limited to 60/hour - you will hit this in a long run. Always send
+              `-H "Authorization: token $GITHUB_TOKEN"` on GitHub API calls, or
+              prefer `gh api <path>` which authenticates automatically and gets
+              5000/hour. If a curl call starts returning 403 rate-limit JSON, switch
+              to `gh api` immediately.
 
             NO-CHURN VERIFICATION (MANDATORY, applies to every step below). You
             must NEVER push a version or commit to OBS if it was already pushed
@@ -130,6 +151,153 @@ jobs:
                  the root cause, and collapse the duplicate changelog entries
                  so only one entry exists per actual update.
 
+            PACKAGE DEPENDENCY DEEP AUDIT (MANDATORY - "TEAR EVERY PACKAGE
+            APART" sweep; applies to every package, every run). You must not
+            trust that a spec is complete just because it builds. Broken or
+            incomplete specs (missing BuildRequires/Requires, stale
+            dependencies, vendored crates that changed upstream) are the #1
+            cause of silent build rot. Chain-of-verification protocol: draft a
+            dependency list from the spec, independently derive the TRUE list
+            from upstream, then reconcile - never trust either alone.
+
+              a. OPEN THE PACKAGE. Read the FULL spec (every BuildRequires /
+                 Requires / BuildConflicts, every %global, Source URLs), the
+                 .changes file, and update.sh. Download the Source0 tarball
+                 into the working tree (it is gitignored, safe) and EXTRACT
+                 it. Do not reason about dependencies from memory - inspect
+                 the actual upstream files:
+                 - Rust: Cargo.toml / Cargo.lock (dependencies + build-deps +
+                   dev-deps; vendor dir if present)
+                 - Node: package.json / pnpm-lock.yaml / yarn.lock
+                 - C/C++: meson.build / CMakeLists.txt / Makefile / configure.ac
+                 - Python: pyproject.toml / setup.py / requirements.txt
+                 - Go: go.mod
+                 - Anything else: the project's install docs, Dockerfile, or
+                   CI workflows (.github/workflows) - they list what the
+                   project itself installs to build.
+              b. DERIVE THE TRUE BUILD DEPENDENCY LIST from those files.
+                 Every direct dependency the upstream build needs MUST have a
+                 matching BuildRequires (or be satisfied by an existing
+                 vendored/bundled copy - in that case note it explicitly).
+              c. COMPARE against the spec. Build a diff: dependencies present
+                 in the spec, dependencies missing from the spec, dependencies
+                 in the spec that no longer exist upstream. MISSING
+                 BuildRequires/Requires = a bug. Fix it.
+              d. WEB-SEARCH-VERIFY EVERYTHING before adding a single
+                 BuildRequires: the dependency name (it must be real), and how
+                 openSUSE names the package for it. Check the openSUSE repos:
+                 `zypper se <name>` is unavailable here, so query the OBS API
+                 or https://software.opensuse.org (web search `openSUSE
+                 <name> package`), and cross-check with
+                 https://build.opensuse.org/package/show/openSUSE:Factory/<name>.
+                 If the dependency is not packaged in openSUSE at all, do NOT
+                 invent it - report it and move on. If it is a Rust crate,
+                 check if it is vendored already (vendor.tar.xz) - vendored
+                 crates do NOT need BuildRequires, but the crates.io crate
+                 list must match Cargo.lock, so regenerate vendor tarballs
+                 when the lock changes. Cross-check your conclusions against
+                 the ground truth OBS itself resolved:
+                 GET /build/home:ackerman/<repo>/<arch>/_builddepinfo for the
+                 project (it lists every package's resolved build deps) - if a
+                 dep you consider missing is NOT in _builddepinfo either, OBS
+                 cannot see it and the spec genuinely lacks it.
+              e. ALSO AUDIT RUNTIME Requires (what the installed binary/desktop
+                 file needs at runtime: shared libs via ldd, themes, fonts,
+                 helper binaries, XDG portal services, etc. - check the
+                 installed files and upstream docs) and find EXTRA/unneeded
+                 dependencies that can be dropped (dead BuildRequires rot).
+                 Keep the spec minimal and correct.
+              f. APPLY AND VERIFY. Add the missing deps to the spec (alphabet-
+                 ized, following existing spec conventions), commit, sync to
+                 OBS, trigger the rebuild, and wait for it: an added dep that
+                 does not resolve is worse than none. Retry up to 3 times,
+                 then revert and file an issue.
+              g. MANDATORY DELIVERABLE - no exceptions, output a dependency
+                 audit table for EVERY package in the repo:
+                 | package | upstream deps found | in spec | missing/added |
+                 | extra/dropped | status |
+                 where status is one of: deps-verified / deps-fixed /
+                 blocked-(reason). If any package is missing from this table,
+                 the run is not finished. State your confidence
+                 (high/medium/low) for any package you could not fully verify,
+                 and why.
+
+            INSTALL-VERIFICATION SWEEP (MANDATORY - "zypper in <pkg>" MUST
+            work on a real openSUSE machine, not just build on OBS). An OBS
+            "succeeded" state only proves the package COMPILES. It does NOT
+            prove it INSTALLS. Specs copied from Fedora carry Fedora binary
+            package names in Requires (e.g. libXScrnSaver1, alsa-lib,
+            cups-libs, pulseaudio-libs, libnotify...) that do NOT exist on
+            openSUSE, so OBS builds fine but every user hitting `zypper in`
+            gets "Problem: 1: nothing provides 'libXScrnSaver1' needed by..."
+            - this already happened with rootapp-0.9.125 and
+            opencode-desktop-1.18.11. Users choose "break dependencies" and
+            get broken installs. You must CATCH this before users do.
+
+              a. DOWNLOAD THE BUILT RPM, not the source. List the binaries OBS
+                 produced and fetch the actual .rpm:
+                 GET  https://api.opensuse.org/build/home:ackerman/<repo>/<arch>/<pkg>
+                      (lists built binary filenames, e.g. openSUSE_Tumbleweed/x86_64)
+                 GET  https://api.opensuse.org/build/home:ackerman/<repo>/<arch>/<pkg>/<pkg>-<ver>.x86_64.rpm
+                      (downloads the binary; alternatively the download.opensuse.org
+                       mirror: https://download.opensuse.org/repositories/home:ackerman/
+                       openSUSE_Tumbleweed/x86_64/ - list it with curl to find the RPM)
+              b. REAL INSTALL TEST IN A CLEAN TUMBLEWEED CONTAINER. Docker is
+                 preinstalled on the ubuntu-latest runner - use it. Spin up a
+                 fresh openSUSE Tumbleweed container, add the distro OSS repo
+                 and the home:ackerman repo, and ACTUALLY INSTALL the built
+                 RPM with zypper. Example:
+                 docker run --rm -v "$PWD:/rpms" \
+                   registry.opensuse.org/opensuse/tumbleweed:latest bash -lc '
+                     zypper --non-interactive --gpg-auto-import-keys addrepo --refresh \
+                       https://download.opensuse.org/tumbleweed/repo/oss/ oss
+                     zypper --non-interactive --gpg-auto-import-keys addrepo --refresh \
+                       https://download.opensuse.org/repositories/home:ackerman/openSUSE_Tumbleweed/ nexus
+                     zypper --non-interactive --gpg-auto-import-keys refresh
+                     zypper --non-interactive install --no-recommends /rpms/<pkg>-*.x86_64.rpm
+                     rpm -V <pkg>
+                     ldd "$(which <pkg>)"
+                   '
+                 If zypper errors with "nothing provides 'X'" - the install
+                 test FAILED and the package is NOT done, no matter what OBS
+                 says. If docker is unavailable, fall back to
+                 `zypper --root /tmp/tw --gpg-auto-import-keys install
+                 --dry-run` after `zypper --root /tmp/tw addrepo <url>` -
+                 dependency resolution works the same without a container.
+              c. MAP FEDORA NAMES TO openSUSE NAMES. For every failing
+                 Requires, resolve the correct provider INSIDE the container:
+                 zypper what-provides 'libXScrnSaver.so.1()(64bit)'   # or
+                 zypper se --provides <capability>
+                 Known trap (already hit): Fedora's package `libXScrnSaver1`
+                 is `libXScrnsaver1` on openSUSE (provides
+                 libXScrnSaver.so.1). RULE: prefer soname-based Requires like
+                 `Requires: libXScrnSaver.so.1()(64bit)` (distro-agnostic)
+                 over distro package names; only use a named package after
+                 zypper confirmed it exists in the OSS repo. NEVER copy a
+                 Fedora Requires list blindly - verify each name.
+              d. FIX, REBUILD, RETEST. Update the spec Requires/BuildRequires,
+                 commit, sync to OBS, rebuild, and re-run the container
+                 install test until zypper installs the RPM cleanly AND the
+                 app's binary launches (run `--version`/`--help` or whatever
+                 the app supports; exit 0 = smoke test passed). Also run
+                 `zypper install --dry-run` for any package whose name could
+                 collide across repos.
+              e. SCOPE: install-test EVERY package you touched this run
+                 (mandatory, before you consider the fix done) plus a
+                 rotating spot-check of untouched packages (>=5 per run,
+                 rotating until the whole repo is covered every few runs).
+                 Packages that are pure -devel/library or that cannot run
+                 headless (GUI apps) still get the install test; only the
+                 runtime smoke test may be skipped for those, with the reason
+                 recorded.
+              f. MANDATORY DELIVERABLE - install-test table in your final
+                 summary, one row per package tested:
+                 | package | OBS build | zypper install test | smoke test |
+                 status |
+                 where status is one of: installable / fixed / broken-(dep)
+                 / blocked-(reason). Any package you changed but did not
+                 install-test is an unfinished package.
+
             Then work autonomously, in this priority order:
 
             1. FIX FAILED OBS BUILDS (highest priority).
@@ -154,6 +322,10 @@ jobs:
                - Read README.md's package table and flag ANY discrepancy: a package in
                  the README but missing as a directory, or a directory missing from the
                  README - both are bugs to fix.
+               - CROSS-CHECK AGAINST OBS: GET https://api.opensuse.org/source/home:ackerman
+                 and diff the OBS package list against the repo directories. A package
+                 on OBS but absent locally, or local but never synced to OBS, is a bug
+                 to fix (sync missing ones per the THEN section).
                - Record the checklist as a working note. Nothing may be added to it
                  later; you are done with this step only when every row is resolved.
 
@@ -184,14 +356,31 @@ jobs:
                If wrong or stale, update the spec Version + Source0/checksum and add a
                .changes entry describing the fix.
 
-               KNOWN PACKAGE-SPECIFIC NOTE (rootapp): for the rootapp package, the
-               authoritative reference is fedora-nexus (github.com/Ackerman-00/fedora-nexus,
-               rootapp/rootapp.spec, currently 0.9.125). The fedora-nexus packaging was
-               personally tested and patched by the repo owner, so it is the source of
-               truth for this package. Do NOT trust the AUR rootapp-bin version (it lags),
-               and do NOT trust "19.2.5" (a bogus string extracted from the AppImage).
-               Verify by comparing the AppImage sha256 with fedora-nexus and keep the
-               version in sync with it.
+               KNOWN PACKAGE-SPECIFIC NOTE (rootapp): rootapp is a proprietary
+               AppImage from https://installer.rootapp.com/installer/Linux/X64/Root.AppImage
+               (no GitHub releases, no tags - version comes from INSIDE the
+               AppImage). The authoritative references, in priority order:
+                1. COPR: https://copr.fedorainfracloud.org/coprs/ackerman/nexus/package/rootapp/
+                   (the owner's own Fedora COPR build of this exact package; the
+                    version/checksum there is trusted - note the site may show a
+                    bot-check page, retry or use the download links)
+                2. fedora-nexus spec: https://github.com/Ackerman-00/fedora-nexus/tree/main/rootapp
+                   (rootapp/rootapp.spec + rootapp/update.sh; personally tested
+                    and patched by the repo owner; source of truth for how the
+                    AppImage is unpacked and for the version string)
+                3. TEAR THE APPIMAGE ITSELF APART: download the AppImage and
+                   extract it (unsquashfs with the ELF section-header offset as
+                   fedora-nexus' %prep does), then read the real version from
+                   inside - e.g. the .desktop file (X-AppImage-Version),
+                   package.json of the bundled Electron/Chromium resources,
+                   app.asar metadata, or the binary version strings. Also
+                   compare the sha256 of the downloaded AppImage against
+                   fedora-nexus' pinned `# sha256:` comment - matching means
+                   the exact same binary is being packaged.
+               Do NOT trust the AUR rootapp-bin version (it lags) and do NOT
+               trust "19.2.5" (a bogus string extracted from a binary). Keep
+               the version in sync with what the AppImage itself reports and
+               with fedora-nexus.
 
                STEP D - CROSS-REPO CONSISTENCY CHECK (OPTIONAL, NEVER AUTHORITATIVE).
                The AUTHORITATIVE version of any package is its REAL upstream project
@@ -327,6 +516,8 @@ jobs:
               OBS build.
             - No churn: only touch packages that are actually broken, missing, or outdated. Do
               not bump versions gratuitously.
+            - Never echo, print, commit, or paste OBS_PASS / OPENCODE_API_KEY /
+              GITHUB_TOKEN values anywhere (terminal output, issues, files, logs).
             - Don't get stuck: cap retries at 3 per package and escalate unresolvable problems
               via issues.
             - End every run with a concise final summary: what you fixed, which issues you
