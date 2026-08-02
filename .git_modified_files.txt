@@ -1,0 +1,4 @@
+mangowm-git/mangowm-git.changes
+mangowm-git/mangowm-git.spec
+niri-git/niri-git.changes
+xwayland-satellite-git/xwayland-satellite-git.changes
