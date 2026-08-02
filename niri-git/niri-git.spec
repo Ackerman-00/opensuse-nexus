@@ -9,7 +9,7 @@ Release:        0
 Summary:        A scrollable-tiling Wayland compositor (Nexus Optimized)
 License:        GPL-3.0-or-later
 Group:          System/GUI/Other
-URL:            https://github.com/YaLTeR/niri
+URL:            https://github.com/niri-wm/niri
 
 # Generated dynamically by GitHub Actions
 Source0:        niri-%{shortcommit}.tar.gz

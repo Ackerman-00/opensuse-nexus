@@ -2,7 +2,7 @@
 
 SPEC_FILE="niri-git.spec"
 CHANGES_FILE="niri-git.changes"
-GITHUB_REPO="YaLTeR/niri"
+GITHUB_REPO="niri-wm/niri"
 PACKAGER="Ackerman-00 <quietcraft@gmail.com>"
 
 echo "🔍 Checking for upstream commits on $GITHUB_REPO..."
