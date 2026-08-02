@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Sun Aug 02 07:08:54 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Update to upstream commit 2c980bb59875b0d32144a71867fbdebb2f77cd20 (version 20260802)
+
+-------------------------------------------------------------------
 Sun Aug 02 07:34:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Initial package of stb v20260416 (single-file public domain libraries for C/C++)

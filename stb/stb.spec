@@ -17,7 +17,7 @@
 
 
 Name:           stb
-Version:        20260416
+Version:        20260802
 Release:        0
 Summary:        Single-File Public Domain Libraries for C/C++
 License:        MIT OR Unlicense
