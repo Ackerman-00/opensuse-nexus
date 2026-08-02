@@ -15,15 +15,23 @@ Curated packages optimized for minimal Wayland compositors (Niri, Mangowm) and h
 ## Installation
 
 ```bash
-# 1. Add the OBS repository
-sudo zypper addrepo --refresh "https://download.opensuse.org/repositories/home:/ackerman/openSUSE_Tumbleweed/home:ackerman.repo" nexus
+# 1. Add the OBS repository (as root)
+zypper addrepo https://download.opensuse.org/repositories/home:ackerman/openSUSE_Tumbleweed/home:ackerman.repo
+zypper refresh
 
 # 2. Install a package (example)
-sudo zypper install zen-browser
+zypper install zen-browser
 ```
 
 > [!NOTE]
-> The URL above targets **openSUSE Tumbleweed**. For Leap, replace `openSUSE_Tumbleweed` with your release (e.g. `openSUSE_Leap_16.0`) in the URL, or grab it from the project's *Download repository* section.
+> For **Slowroll**, use `openSUSE_Slowroll` in the URL instead of `openSUSE_Tumbleweed`:
+>
+> ```bash
+> zypper addrepo https://download.opensuse.org/repositories/home:ackerman/openSUSE_Slowroll/home:ackerman.repo
+> zypper refresh
+> ```
+>
+> For Leap, replace the release segment with your version (e.g. `openSUSE_Leap_16.0`), or grab the URL from the project's *Download repository* section.
 
 ### List available packages
 
