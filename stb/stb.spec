@@ -25,6 +25,8 @@ Group:          Development/Libraries/C and C++
 URL:            https://github.com/nothings/stb
 Source0:        stb-%{version}.tar.xz
 Source1:        stb.pc.in
+# c++ compilation test has no main() and fails to link; skip it in %check
+Patch0:         fix-cpp-check.patch
 # Properly handle all LP64 platforms
 Patch1:         lp64.patch
 BuildRequires:  c++_compiler

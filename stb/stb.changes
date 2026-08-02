@@ -5,3 +5,5 @@ Sun Aug 02 07:34:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 - Drop obsolete fix-cpp-check.patch: upstream already removed stb_perlin.h
   references from the test Makefile; stb_perlin.h is still shipped, so the
   patch's hunks no longer apply to the current source
+- Regenerate fix-cpp-check.patch for the 2026 source: the c++ compilation
+  test has no main() and fails to link, so it is commented out in %check
