@@ -106,6 +106,9 @@ sed -i 's|^Exec=.*|Exec=%{_bindir}/opencode-desktop %U|' \
 %{_bindir}/opencode-desktop
 %{_datadir}/applications/opencode-desktop.desktop
 %{_datadir}/applications/ai.opencode.desktop.desktop
+%dir %{_datadir}/icons/hicolor
+%dir %{_datadir}/icons/hicolor/*
+%dir %{_datadir}/icons/hicolor/*/apps
 %{_datadir}/icons/hicolor/*/apps/*
 %{_datadir}/metainfo/*
 /opt/OpenCode/

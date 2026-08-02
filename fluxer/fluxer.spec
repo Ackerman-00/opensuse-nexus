@@ -74,6 +74,9 @@ done
 %{_bindir}/%{name}
 %{_libdir}/%{name}/
 %{_datadir}/applications/%{appid}.desktop
+%dir %{_datadir}/icons/hicolor
+%dir %{_datadir}/icons/hicolor/*
+%dir %{_datadir}/icons/hicolor/*/apps
 %{_datadir}/icons/hicolor/*/apps/%{appid}.png
 
 %changelog

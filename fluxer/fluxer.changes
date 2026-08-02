@@ -1,2 +1,2 @@
 * Sun Aug 02 2026 Ackerman-00 <quietcraft@gmail.com> - 2026.731.153836-0
-- Import fluxer from fedora-nexus (version 2026.731.153836)
+- Own hicolor icon theme directories to fix OBS "directories not owned" build failure

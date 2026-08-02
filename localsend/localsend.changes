@@ -1,2 +1,2 @@
 * Sun Aug 02 2026 Ackerman-00 <quietcraft@gmail.com> - 1.17.0-0
-- Import localsend from fedora-nexus (version 1.17.0)
+- Own hicolor icon theme directories to fix OBS "directories not owned" build failure

@@ -63,6 +63,9 @@ chmod 0755 %{buildroot}%{_bindir}/localsend_app
 %defattr(-,root,root)
 %{_bindir}/localsend_app
 %{_datadir}/applications/localsend_app.desktop
+%dir %{_datadir}/icons/hicolor
+%dir %{_datadir}/icons/hicolor/*
+%dir %{_datadir}/icons/hicolor/*/apps
 %{_datadir}/icons/hicolor/*/apps/localsend_app.png
 %{_datadir}/localsend_app/
 
