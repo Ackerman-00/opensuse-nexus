@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Sun Aug 02 18:50:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Fix unresolvable Fedora package names in Requires: libXScrnSaver1,
+  gtk3, libnotify, vulkan-loader do not exist on openSUSE. Replaced with
+  soname-based Requires (libXss.so.1()(64bit), libgtk-3.so.0()(64bit),
+  libnotify.so.4()(64bit), libvulkan.so.1()(64bit)) so `zypper install`
+  resolves cleanly on Tumbleweed/Slowroll.
+
+-------------------------------------------------------------------
 Sun Aug 02 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Fix wrong version 19.2.5 -> 0.9.125: 19.2.5 was a Stripe billing SDK

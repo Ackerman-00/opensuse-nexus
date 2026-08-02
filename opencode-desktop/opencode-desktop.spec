@@ -17,17 +17,17 @@ Source1:        opencode-desktop-rpmlintrc
 ExclusiveArch:  x86_64
 BuildRequires:  python3
 
-Requires:       gtk3
-Requires:       libnotify4
-Requires:       nss
-Requires:       libXScrnSaver1
+Requires:       libgtk-3.so.0()(64bit)
+Requires:       libnotify.so.4()(64bit)
+Requires:       libnss3.so()(64bit)
+Requires:       libXss.so.1()(64bit)
 Requires:       libXtst6
 Requires:       xdg-utils
 Requires:       at-spi2-core
 Requires:       libuuid1
-Requires:       alsa-lib
-Requires:       cups-libs
-Requires:       Mesa-libgbm1
+Requires:       libasound.so.2()(64bit)
+Requires:       libcups.so.2()(64bit)
+Requires:       libgbm.so.1()(64bit)
 Requires:       libXcomposite1
 Requires:       libXdamage1
 Requires:       libxkbcommon0

@@ -22,10 +22,10 @@ BuildRequires:  binutils
 BuildRequires:  tar
 
 # Explicit dependencies mapped from the upstream DEB to openSUSE
-# (libappindicator3-1 | libayatana-appindicator3-1 -> libayatana-appindicator-gtk3,
-#  libayatana-ido3-0.4-0 -> libayatana-ido-gtk3, xdg-user-dirs, libc6 -> glibc)
-Requires:       libayatana-appindicator-gtk3
-Requires:       libayatana-ido-gtk3
+# (libappindicator3-1 | libayatana-appindicator3-1 -> libayatana-appindicator3-1,
+#  libayatana-ido3-0.4-0 -> libayatana-ido3-0_4-0, xdg-user-dirs, libc6 -> glibc)
+Requires:       libayatana-appindicator3.so.1()(64bit)
+Requires:       libayatana-ido3-0.4.so.0()(64bit)
 Requires:       xdg-user-dirs
 
 %description

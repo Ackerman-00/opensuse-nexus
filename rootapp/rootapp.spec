@@ -20,15 +20,15 @@ BuildRequires:  squashfs
 BuildRequires:  hicolor-icon-theme
 BuildRequires:  python3
 
-Requires:       gtk3
+Requires:       libgtk-3.so.0()(64bit)
 Requires:       mozilla-nss
 Requires:       alsa
-Requires:       libnotify
+Requires:       libnotify.so.4()(64bit)
 Requires:       xdg-utils
 Requires:       at-spi2-core
 Requires:       hicolor-icon-theme
 Requires:       Mesa-libEGL1
-Requires:       vulkan-loader
+Requires:       libvulkan.so.1()(64bit)
 Requires:       mozilla-nspr
 Requires:       libpulse0
 Requires:       libgbm1
@@ -40,7 +40,7 @@ Requires:       libwayland-egl1
 Requires:       libXtst6
 Requires:       libXrandr2
 Requires:       libX11-6
-Requires:       libXScrnSaver1
+Requires:       libXss.so.1()(64bit)
 Requires:       libXcursor1
 Requires:       libXcomposite1
 Requires:       libXdamage1
