@@ -21,9 +21,41 @@ ExclusiveArch:  x86_64
 BuildRequires:  cpio
 BuildRequires:  hicolor-icon-theme
 
-# Simplified dependencies to satisfy openSUSE policy
-Requires:       gamemode
-Requires:       mangohud
+# Runtime dependencies for the bundled Electron/Chromium runtime
+Requires:       at-spi2-core
+Requires:       hicolor-icon-theme
+Requires:       libX11.so.6()(64bit)
+Requires:       libXcomposite.so.1()(64bit)
+Requires:       libXdamage.so.1()(64bit)
+Requires:       libXext.so.6()(64bit)
+Requires:       libXfixes.so.3()(64bit)
+Requires:       libXrandr.so.2()(64bit)
+Requires:       libXss.so.1()(64bit)
+Requires:       libXtst6
+Requires:       libasound.so.2()(64bit)
+Requires:       libatk-1.0.so.0()(64bit)
+Requires:       libatk-bridge-2.0.so.0()(64bit)
+Requires:       libatspi.so.0()(64bit)
+Requires:       libcairo.so.2()(64bit)
+Requires:       libcups.so.2()(64bit)
+Requires:       libdbus-1.so.3()(64bit)
+Requires:       libexpat.so.1()(64bit)
+Requires:       libgbm.so.1()(64bit)
+Requires:       libgio-2.0.so.0()(64bit)
+Requires:       libglib-2.0.so.0()(64bit)
+Requires:       libgobject-2.0.so.0()(64bit)
+Requires:       libgtk-3.so.0()(64bit)
+Requires:       libnotify.so.4()(64bit)
+Requires:       libnspr4.so()(64bit)
+Requires:       libnss3.so()(64bit)
+Requires:       libnssutil3.so()(64bit)
+Requires:       libpango-1.0.so.0()(64bit)
+Requires:       libsmime3.so()(64bit)
+Requires:       libudev.so.1()(64bit)
+Requires:       libuuid1
+Requires:       libxcb.so.1()(64bit)
+Requires:       libxkbcommon.so.0()(64bit)
+Requires:       xdg-utils
 
 %description
 Fluxer is a free and open source instant messaging and VoIP platform built for

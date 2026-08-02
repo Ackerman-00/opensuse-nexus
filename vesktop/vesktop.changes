@@ -1,3 +1,6 @@
+* Sun Aug 02 2026 Ackerman-00 <quietcraft@gmail.com> - 1.6.5-0
+- Add missing runtime dependencies for the bundled Electron runtime (NSS, NSPr, libgbm, libasound, etc.) so the app launches
+
 * Sun May 03 2026 GitHub Actions <actions@github.com> - 1.6.5-0
 - Update vesktop to v1.6.5
 
