@@ -39,6 +39,7 @@ Or **[browse all packages and their builds online](https://build.opensuse.org/pr
 
 | Package | Description | Install |
 |---|---|---|
+| **fluxer** | Free and open source messaging & VoIP platform | `sudo zypper install fluxer` |
 | **mangowm-git** | Scrollable-tiling Wayland compositor (Nexus optimized) | `sudo zypper install mangowm-git` |
 | **matugen** | Material You color generation tool | `sudo zypper install matugen` |
 | **niri-git** | Scrollable-tiling Wayland compositor | `sudo zypper install niri-git` |
