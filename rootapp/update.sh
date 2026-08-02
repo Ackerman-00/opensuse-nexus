@@ -54,7 +54,28 @@ fi
 if [ "$EXTRACTED" = "1" ]; then
     ROOT="$TMPDIR/squashfs-root"
 
-    if [ -f "$ROOT/resources/app/package.json" ]; then
+    # .NET/Avalonia apps: version lives in sq.version (NuSpec XML).
+    # This is the ONLY authoritative source for Root App versions.
+    if [ -f "$ROOT/usr/bin/sq.version" ]; then
+        VERSION=$(python3 -c "
+import xml.etree.ElementTree as ET
+try:
+    root = ET.parse('$ROOT/usr/bin/sq.version').getroot()
+    ns = {'ns': 'http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd'}
+    m = root.find('.//ns:metadata/ns:version', ns)
+    if m is not None and m.text:
+        print(m.text)
+    else:
+        m2 = root.find('.//metadata/version')
+        if m2 is not None and m2.text:
+            print(m2.text)
+except:
+    print('')
+")
+    fi
+
+    # Electron apps: version in package.json
+    if [ -z "$VERSION" ] && [ -f "$ROOT/resources/app/package.json" ]; then
         VERSION=$(python3 -c "
 import json
 try:
@@ -65,15 +86,18 @@ except:
 ")
     fi
 
-    if [ -z "$VERSION" ] && [ -f "$ROOT/AppRun" ]; then
-        VERSION=$(strings "$ROOT/AppRun" 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
-    fi
-
-    if [ -z "$VERSION" ]; then
-        VERSION=$(grep -rI '"[0-9]\+\.[0-9]\+\.[0-9]\+"' "$ROOT" 2>/dev/null | head -3 | sed 's/.*"\([0-9]*\.[0-9]*\.[0-9]*\)".*/\1/' | head -1)
-    fi
+    # No wildcard grep - it picks up dependency versions (e.g. Stripe billing SDK "19.2.5").
 
     rm -rf "$TMPDIR/squashfs-root" "$TMPDIR/squashfs.img"
+fi
+
+# Validate extracted version (reject implausible values like dependency versions)
+if [ -n "$VERSION" ]; then
+    MAJOR="${VERSION%%.*}"
+    if [ "$MAJOR" -gt 5 ] 2>/dev/null; then
+        echo "ERROR: Extracted version $VERSION has implausible major version $MAJOR"
+        VERSION=""
+    fi
 fi
 
 if [ -n "$VERSION" ] && [ "$VERSION" != "$CURRENT_VERSION" ]; then

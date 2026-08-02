@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Sun Aug 02 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Fix wrong version 19.2.5 -> 0.9.125: 19.2.5 was a Stripe billing SDK
+  version picked up by a wildcard grep; the authoritative version comes
+  from the .NET app's sq.version NuSpec metadata (0.9.125), matching the
+  AUR rootapp-bin package. update.sh now reads sq.version exclusively.
+
+-------------------------------------------------------------------
 Sat Aug 01 00:02:25 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Update to 19.2.5 (sha256: 86ed0d76bcd92b574c651ea37ebaa392f47f543ecf11c61ed6080f9653a73444)

@@ -4,7 +4,7 @@
 %global __provides_exclude_from ^/opt/rootapp/.*$
 
 Name:           rootapp
-Version:        19.2.5
+Version:        0.9.125
 Release:        0
 Summary:        A new Discord alternative, designed for gaming communities and large online groups
 
