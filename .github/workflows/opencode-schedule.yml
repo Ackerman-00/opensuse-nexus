@@ -149,6 +149,13 @@ jobs:
                If wrong or stale, update the spec Version + Source0/checksum and add a
                .changes entry describing the fix.
 
+               KNOWN PACKAGE-SPECIFIC NOTE (rootapp): for the rootapp package the
+               accurate version is 0.9.125 (same source AppImage sha256 as fedora-nexus
+               and void-nexus, which BOTH package 0.9.125). Do NOT trust the AUR
+               rootapp-bin version (it lags). Do NOT trust "19.2.5" - that is a bogus
+               string extracted from the AppImage. Verify by comparing the AppImage
+               sha256 with the sibling repos and use 0.9.125 if the binary matches.
+
                STEP D - CROSS-REPO CONSISTENCY CHECK (OPTIONAL, NEVER AUTHORITATIVE).
                The AUTHORITATIVE version of any package is its REAL upstream project
                (the project's own GitHub releases/tags, official homepage/changelog, or
