@@ -25,14 +25,14 @@ CURRENT_COMMIT=$(grep -E "^%global commit" "$SPEC_FILE" | awk '{print $3}')
 SHORT_COMMIT=${LATEST_COMMIT:0:7}
 LATEST_DATE=$(echo "$LATEST_DATE_RAW" | sed 's/[-T:Z]//g')
 
+if [ "$CURRENT_COMMIT" == "$LATEST_COMMIT" ]; then
+    echo "Package is already at the latest commit ($SHORT_COMMIT). No update needed."
+    exit 0
+fi
+
 echo "Downloading source tarball ($SHORT_COMMIT)..."
 rm -f mango-*.tar.gz
 curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "mango-$SHORT_COMMIT.tar.gz"
-
-if [ "$CURRENT_COMMIT" == "$LATEST_COMMIT" ]; then
-    echo "Package is already at the latest commit ($SHORT_COMMIT). Tarball downloaded for OBS sync."
-    exit 0
-fi
 
 echo "Update found: ${CURRENT_COMMIT:0:7} -> $SHORT_COMMIT"
 
