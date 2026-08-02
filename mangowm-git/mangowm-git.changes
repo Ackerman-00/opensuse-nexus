@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Sun Aug 02 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Bump version base 0.15.2 -> 0.15.5 to match latest upstream release
+  (upstream mangowm/mango v0.15.5, released 2026-07-25)
+
+-------------------------------------------------------------------
 Sun Aug 02 00:00:48 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Nightly sync with upstream main branch (Commit: b26167b)

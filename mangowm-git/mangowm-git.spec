@@ -7,7 +7,7 @@
 %global src_name        mango
 
 Name:           %{pkg_name}-git
-Version:        0.15.2+git%{gitdate}.%{shortcommit}
+Version:        0.15.5+git%{gitdate}.%{shortcommit}
 Release:        0
 Summary:        A scrollable-tiling Wayland compositor (Nexus Optimized)
 
