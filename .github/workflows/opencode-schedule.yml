@@ -172,9 +172,18 @@ jobs:
                  - C/C++: meson.build / CMakeLists.txt / Makefile / configure.ac
                  - Python: pyproject.toml / setup.py / requirements.txt
                  - Go: go.mod
-                 - Anything else: the project's install docs, Dockerfile, or
-                   CI workflows (.github/workflows) - they list what the
-                   project itself installs to build.
+                  - Anything else: the project's install docs, Dockerfile, or
+                    CI workflows (.github/workflows) - they list what the
+                    project itself installs to build.
+                 For AppImage-based packages (rootapp, obsidian, vesktop,
+                 zen-browser, localsend, ...) tear the AppImage apart EXACTLY
+                 like the rootapp note below describes - unsquashfs with the
+                 ELF section-header offset, then read version + dependencies
+                 from inside (X-AppImage-Version in the .desktop, bundled
+                 package.json / app.asar / lib64/*.so, AppRun scripts). For
+                 .deb-sourced packages, extract with `ar x` + `tar -xf
+                 data.tar.*` and inspect the payload the same way. NEVER
+                 guess what is inside a binary package - open it.
               b. DERIVE THE TRUE BUILD DEPENDENCY LIST from those files.
                  Every direct dependency the upstream build needs MUST have a
                  matching BuildRequires (or be satisfied by an existing
@@ -242,8 +251,18 @@ jobs:
                       (downloads the binary; alternatively the download.opensuse.org
                        mirror: https://download.opensuse.org/repositories/home:ackerman/
                        openSUSE_Tumbleweed/x86_64/ - list it with curl to find the RPM)
-              b. REAL INSTALL TEST IN A CLEAN TUMBLEWEED CONTAINER. Docker is
-                 preinstalled on the ubuntu-latest runner - use it. Spin up a
+              b. REAL INSTALL TEST IN A CLEAN TUMBLEWEED CONTAINER. You need
+                 a working container runtime on the runner. Docker is
+                 preinstalled on the ubuntu-latest runner, but VERIFY it
+                 first: `docker version` (and `docker run --rm hello-world`
+                 once to confirm the daemon works; on GitHub runners no sudo
+                 is needed). If docker is missing, broken, or the daemon is
+                 down, INSTALL it yourself:
+                 sudo apt-get update && sudo apt-get install -y docker.io
+                 sudo systemctl start docker
+                 (or `sudo apt-get install -y podman` and use `podman run`
+                 with the same arguments). Never skip the container test
+                 because the runtime is missing - install it. Then spin up a
                  fresh openSUSE Tumbleweed container, add the distro OSS repo
                  and the home:ackerman repo, and ACTUALLY INSTALL the built
                  RPM with zypper. Example:
@@ -268,6 +287,11 @@ jobs:
                  Requires, resolve the correct provider INSIDE the container:
                  zypper what-provides 'libXScrnSaver.so.1()(64bit)'   # or
                  zypper se --provides <capability>
+                 ALSO WEB-SEARCH the package name to prove it is real:
+                 `openSUSE <name> package` - confirm it exists in the
+                 Tumbleweed OSS repos via software.opensuse.org and the OBS
+                 Factory page (build.opensuse.org/package/show/openSUSE:Factory/<name>),
+                 with repology.org as an independent cross-check.
                  Known trap (already hit): Fedora's package `libXScrnSaver1`
                  is `libXScrnsaver1` on openSUSE (provides
                  libXScrnSaver.so.1). RULE: prefer soname-based Requires like
