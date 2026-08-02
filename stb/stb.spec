@@ -25,10 +25,8 @@ Group:          Development/Libraries/C and C++
 URL:            https://github.com/nothings/stb
 Source0:        stb-%{version}.tar.xz
 Source1:        stb.pc.in
-# compile fix after removal of stb_perlin.h
-Patch1:         fix-cpp-check.patch
 # Properly handle all LP64 platforms
-Patch2:         lp64.patch
+Patch1:         lp64.patch
 BuildRequires:  c++_compiler
 BuildArch:      noarch
 
