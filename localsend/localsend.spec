@@ -13,6 +13,7 @@ Group:          Productivity/Networking/Other
 URL:            https://github.com/localsend/localsend
 # Use the upstream DEB as our raw source payload
 Source0:        %{url}/releases/download/v%{version}/LocalSend-%{version}-linux-x86-64.deb
+Source1:        localsend-rpmlintrc
 
 ExclusiveArch:  x86_64
 

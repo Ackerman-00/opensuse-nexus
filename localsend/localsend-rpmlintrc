@@ -1,0 +1,6 @@
+addFilter("binary-or-shlib-defines-rpath")
+addFilter("arch-dependent-file-in-usr-share")
+addFilter("explicit-lib-dependency")
+addFilter("invalid-desktopfile")
+addFilter("missing-hash-section")
+addFilter("shared-library-not-executable")

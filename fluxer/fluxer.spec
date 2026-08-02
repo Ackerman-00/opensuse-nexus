@@ -14,6 +14,7 @@ License:        AGPL-3.0-or-later AND BSD
 Group:          Productivity/Networking/Talk/Clients
 URL:            https://fluxer.app
 Source0:        https://api.fluxer.app/dl/desktop/stable/linux/x64/latest/rpm
+Source1:        fluxer-rpmlintrc
 
 ExclusiveArch:  x86_64
 
