@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Sun Aug 02 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Bump version base 0.8.1 -> 0.8.2 to match latest upstream release
+  (upstream v0.8.2, released 2026-07-22)
+
+-------------------------------------------------------------------
 Wed Jul 22 02:51:50 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Nightly sync with upstream main branch (Commit: 8d135d3)
