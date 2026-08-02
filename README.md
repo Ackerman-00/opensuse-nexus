@@ -16,14 +16,14 @@ Curated packages optimized for minimal Wayland compositors (Niri, Mangowm) and h
 
 ```bash
 # 1. Add the OBS repository
-sudo zypper addrepo --refresh "https://download.opensuse.org/repositories/home:ackerman/openSUSE_Tumbleweed/home:ackerman.repo" nexus
+sudo zypper addrepo --refresh "https://download.opensuse.org/repositories/home:/ackerman/openSUSE_Tumbleweed/" nexus
 
 # 2. Install a package (example)
 sudo zypper install zen-browser
 ```
 
 > [!NOTE]
-> The URL above targets **openSUSE Tumbleweed**. For Leap, replace `openSUSE_Tumbleweed` with your release (e.g. `openSUSE_Leap_15.6`) in the `.repo` URL, or grab it from the project's *Download repository* section.
+> The URL above targets **openSUSE Tumbleweed**. For Leap, replace `openSUSE_Tumbleweed` with your release (e.g. `openSUSE_Leap_16.0`) in the URL, or grab it from the project's *Download repository* section.
 
 ### List available packages
 
@@ -61,7 +61,7 @@ Or **[browse all packages and their builds online](https://build.opensuse.org/pr
 
 ## Build status
 
-Automated OBS builds are triggered on every push to `main` (via the `update-packages.yml` pipeline) and every ~4h the autonomous opencode maintainer verifies and repairs failed builds.
+Automated OBS builds are triggered on every push to `main` (via the `update-packages.yml` pipeline) and every ~2h the autonomous opencode maintainer verifies and repairs failed builds.
 
 | Project | Status |
 |---|---|
