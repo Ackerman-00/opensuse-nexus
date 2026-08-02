@@ -173,14 +173,16 @@ jobs:
           }
 
           # Create the package in OBS first, otherwise PUT uploads fail with
-          # "<status code="unknown_package">". Package creation is idempotent.
+          # "<status code="unknown_package">". PUT of the _meta file creates
+          # the package if it does not exist yet (idempotent).
           ensure_package() {
             local pkg="$1"
             if curl -s -u "$OBS_USER:$OBS_PASS" \
                  "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -q 'unknown_package'; then
               echo " -> Creating package $pkg in OBS..."
-              curl -s -X POST -u "$OBS_USER:$OBS_PASS" \
-                "https://api.opensuse.org/source/home:ackerman/$pkg?cmd=createpackage"
+              curl -s -X PUT -u "$OBS_USER:$OBS_PASS" -H "Content-Type: application/xml" \
+                --data-binary "<package name=\"$pkg\" project=\"home:ackerman\"><title>$pkg</title><description>Automatically synced from opensuse-nexus.</description></package>" \
+                "https://api.opensuse.org/source/home:ackerman/$pkg/_meta"
             fi
           }
 
