@@ -10,8 +10,12 @@ REPO="zen-browser/desktop"
 
 echo "🔍 Checking for updates..."
 
-# Get latest release tag from GitHub API
-LATEST_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+# Get latest release tag from GitHub API (authenticated to avoid rate limits)
+if [ -n "$GITHUB_TOKEN" ]; then
+    LATEST_TAG=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name')
+else
+    LATEST_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name')
+fi
 NEW_VER="${LATEST_TAG#v}"
 
 if [ -z "$NEW_VER" ]; then
