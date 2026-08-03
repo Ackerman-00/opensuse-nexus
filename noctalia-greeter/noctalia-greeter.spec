@@ -14,8 +14,10 @@ BuildRequires:  gcc-c++
 BuildRequires:  pkgconfig
 BuildRequires:  wlroots-devel
 BuildRequires:  pkgconfig(wayland-client)
-BuildRequires:  pkgconfig(wayland-server)
+BuildRequires:  pkgconfig(wayland-egl)
 BuildRequires:  pkgconfig(wayland-protocols)
+BuildRequires:  pkgconfig(wayland-server)
+BuildRequires:  pkgconfig(epoxy)
 BuildRequires:  pkgconfig(egl)
 BuildRequires:  pkgconfig(glesv2)
 BuildRequires:  pkgconfig(freetype2)
