@@ -6,8 +6,12 @@ REPO="Vencord/Vesktop"
 
 echo "🔍 Checking for updates..."
 
-# Get latest release data
-LATEST_JSON=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
+# Get latest release data (authenticated to avoid rate limits)
+if [ -n "$GITHUB_TOKEN" ]; then
+    LATEST_JSON=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/releases/latest")
+else
+    LATEST_JSON=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
+fi
 LATEST_TAG=$(echo "$LATEST_JSON" | jq -r .tag_name)
 NEW_VER="${LATEST_TAG#v}"
 

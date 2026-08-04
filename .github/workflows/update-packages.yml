@@ -41,7 +41,11 @@ jobs:
           for script in $(find . -mindepth 2 -name "update.sh"); do
             dir=$(dirname "$script")
             pushd "$dir" > /dev/null
-            bash update.sh
+            # A transient upstream/API failure in one updater must NOT abort the
+            # whole pipeline (it would skip the OBS build check and sync below).
+            if ! bash update.sh; then
+              echo "::warning::update.sh failed in $dir - continuing with the next package"
+            fi
             popd > /dev/null
           done
 
