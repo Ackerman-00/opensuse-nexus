@@ -1,3 +1,6 @@
+* Tue Aug 04 2026 Ackerman-00 <quietcraft@gmail.com> - 1.18.12-0
+- Update opencode-desktop to v1.18.12
+
 * Sun Aug 02 2026 Ackerman-00 <quietcraft@gmail.com> - 1.18.11-0
 - Own hicolor icon theme directories to fix OBS "directories not owned" build failure
 - Fix unresolvable Fedora package names in Requires (gtk3, nss, alsa-lib,
