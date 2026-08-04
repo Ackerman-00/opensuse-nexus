@@ -141,8 +141,43 @@ jobs:
               limited to 60/hour - you will hit this in a long run. Always send
               `-H "Authorization: token $GITHUB_TOKEN"` on GitHub API calls, or
               prefer `gh api <path>` which authenticates automatically and gets
-              5000/hour. If a curl call starts returning 403 rate-limit JSON, switch
-              to `gh api` immediately.
+               5000/hour. If a curl call starts returning 403 rate-limit JSON, switch
+               to `gh api` immediately.
+
+            EVIDENCE & COMPLETION GATE (MANDATORY - "NO EVIDENCE, NO
+            COMPLETION"). Nothing in this run is "done" because you say so -
+            it is done only when it produced an artifact that can be
+            independently verified (a command output, a log, a checksum, a
+            commit SHA, an OBS build id). Apply this to EVERYTHING below:
+              a. EVERY CLAIM COSTS A COMMAND. Every statement about repo
+                 state, builds, installs, dependencies, versions, or checksums
+                 must be backed by the actual output of a command you ran
+                 (curl -sI, sha256sum, docker run, zypper, rpm, gh api, git
+                 log). If you cannot paste the command output, you have not
+                 verified it - redo the check or mark the claim UNVERIFIED
+                 explicitly. "should work", "assumed fine", or "looks
+                 correct" are not conclusions.
+              b. VERIFY THE SYMPTOM, NOT THE CHANGE. A fix is not verified by
+                 the edit you made; it is verified by the failure you observed
+                 BEFORE and its absence AFTER. Capture both sides for every
+                 package you touch.
+              c. FRESH ENVIRONMENT, ALWAYS. The only proof that counts runs in
+                 a CLEAN Tumbleweed container (fresh docker run, no mounted
+                 build state, no leftover repo metadata from the failed
+                 attempt). Never reuse a container, zypper repo state, or
+                 environment from a build that failed - the "fixed" version
+                 must install in the same clean state a user would be in.
+              d. FRESH-CHECKER PASS. After you finish fixing and install-
+                 testing everything you touched, re-run the install tests ONE
+                 more time from scratch (fresh container) as an independent
+                 checker - the agent that fixed the package cannot audit its
+                 own fix. When the relay/next run picks up your work, treat it
+                 as a fresh checker too: re-verify, do not trust the previous
+                 run's claims.
+              e. NAME THE GAPS. End every package's verification with an
+                 honest "not verified: <what and why>" line. A stated gap
+                 beats a silent assumption - but never use a stated gap to
+                 skip verification you were actually able to do.
 
             NO-CHURN VERIFICATION (MANDATORY, applies to every step below). You
             must NEVER push a version or commit to OBS if it was already pushed
@@ -216,6 +251,18 @@ jobs:
                  scripts). NEVER guess what is inside a binary package, and
                  NEVER trust a binary's filename, version string, or claimed
                  dependencies without opening it.
+
+                 RE-TEAR RULE: if the package's upstream changed AT ALL since
+                 the last audit (new version, new commit, new release notes,
+                 new build system), the previous dependency derivation is
+                 VOID. Re-download, re-extract, and re-derive from the NEW
+                 artifact. Never reuse an old audit for a changed package,
+                 even if the spec still builds - "still builds" is not "deps
+                 still correct". For RPMs, tearing apart means: rpm2cpio
+                 <file>.rpm | cpio -idm, then read the actual linked sonames
+                 (ldd of every ELF inside) and reconcile them against the
+                 spec's Requires/BuildRequires. Verify the pinned sha256 of
+                 every downloaded artifact against the spec comment.
               b. DERIVE THE TRUE BUILD DEPENDENCY LIST from those files.
                  Every direct dependency the upstream build needs MUST have a
                  matching BuildRequires (or be satisfied by an existing
@@ -274,6 +321,16 @@ jobs:
             - this already happened with rootapp-0.9.125 and
             opencode-desktop-1.18.11. Users choose "break dependencies" and
             get broken installs. You must CATCH this before users do.
+              SCOPE & COVERAGE LEDGER: the goal is 100% coverage of every
+              package the home:ackerman OBS project publishes. Keep a
+              per-package install-test ledger in .opencode-relay.md (package |
+              last install-tested | result | smoke result). This run MUST
+              install-test: (1) every package you touched or re-uploaded, (2)
+              every package whose binary changed since its last successful
+              install test (query the OBS build list), and (3) as many
+              still-uncovered packages as your time budget allows, oldest-
+              first. NEVER mark a package's install test as done based on a
+              previous run's result if the binary changed since then.
 
               a. DOWNLOAD THE BUILT RPM, not the source. List the binaries OBS
                  produced and fetch the actual .rpm:
@@ -338,14 +395,17 @@ jobs:
                  the app supports; exit 0 = smoke test passed). Also run
                  `zypper install --dry-run` for any package whose name could
                  collide across repos.
-              e. SCOPE: install-test EVERY package you touched this run
-                 (mandatory, before you consider the fix done) plus a
-                 rotating spot-check of untouched packages (>=5 per run,
-                 rotating until the whole repo is covered every few runs).
-                 Packages that are pure -devel/library or that cannot run
-                 headless (GUI apps) still get the install test; only the
-                 runtime smoke test may be skipped for those, with the reason
-                 recorded.
+                  e. SCOPE: this run MUST install-test, in priority order: every package you
+                  touched or re-uploaded this run; every package whose binary
+                  changed since its last successful install test; then the
+                  oldest still-uncovered packages until your time budget is
+                  used up. Update the coverage ledger in .opencode-relay.md
+                  after every test. The run is NOT complete while any package
+                  whose binary changed since its last test remains untested.
+                  Packages that are pure -devel/library or that cannot run
+                  headless (GUI apps) still get the install test; only the
+                  runtime smoke test may be skipped for those, with the reason
+                  recorded.
               f. MANDATORY DELIVERABLE - install-test table in your final
                  summary, one row per package tested:
                  | package | OBS build | zypper install test | smoke test |
@@ -613,6 +673,31 @@ jobs:
             preserves your unfinished work and picks it up. Never block forever; prefer
             commit + push + move on.
 
+            PRE-COMPLETION GATE (MANDATORY - run this BEFORE your final
+            summary; you are not finished until every item passes with
+            evidence):
+              1. `git status --porcelain` is EMPTY and the working tree is
+                 clean.
+              2. Every package you touched this run has a passing install
+                 test in a CLEAN Tumbleweed container, including the fresh-
+                 checker re-run, with before/after evidence recorded.
+              3. The install-test coverage ledger in .opencode-relay.md is
+                 updated with this run's results; every package whose binary
+                 changed since its last test has been tested; no install-test
+                 failure is left unaddressed (fixed + retested, or reverted +
+                 issue opened).
+              4. The dependency audit table covers 100% of the inventory,
+                 including re-derivation for every package whose upstream
+                 changed.
+              5. Every claim in your final summary is backed by command
+                 output (commit SHAs, OBS build ids, docker/zypper logs,
+                 checksums).
+              6. You have stated what you did NOT verify and why - a named
+                 gap is a stated FAIL, not a silent skip.
+            Announce this checklist in your final summary with PASS/FAIL and
+            the evidence for every item. Any FAIL means: fix it, re-run the
+            gate, then finish.
+
             HARD RULES:
             - You have FULL control: edit any file in the repo (specs, .changes, update.sh,
               workflows, configs, README/docs) whenever it needs fixing or updating - but always
@@ -628,6 +713,9 @@ jobs:
               before finishing.
             - Web-search FIRST, then act. Deeply verify every version, URL, and checksum online
               before touching anything; do not rely on memory.
+            - No evidence, no completion: every claim costs a command you ran -
+              paste the output. Verify the symptom is gone, not the change you
+              made.
             - Close issues only AFTER the fix is verified by a successful OBS build.
             - Merge PRs only AFTER verifying correctness (web search) and then verifying the OBS
               build; use squash merge.
@@ -645,7 +733,8 @@ jobs:
               via issues.
             - End every run with a concise final summary: what you fixed, which issues you
               closed, which PRs you merged/rejected, which OBS builds you verified and their
-              result, and what remains.
+              result, and what remains. Include the pre-completion gate checklist
+              with PASS/FAIL + evidence per item.
 
       - name: Clean up stray opencode/schedule branches
         if: always()
