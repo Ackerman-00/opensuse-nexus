@@ -728,7 +728,6 @@ jobs:
             - Relay, don't die: never let a run end with uncommitted work or
               unrecorded progress - update .opencode-relay.md and trigger a
               relay run before the timeout.
-              GITHUB_TOKEN values anywhere (terminal output, issues, files, logs).
             - Don't get stuck: cap retries at 3 per package and escalate unresolvable problems
               via issues.
             - End every run with a concise final summary: what you fixed, which issues you
