@@ -6,13 +6,23 @@ REPO="Vencord/Vesktop"
 
 echo "🔍 Checking for updates..."
 
-# Get latest release data (authenticated to avoid rate limits)
-if [ -n "$GITHUB_TOKEN" ]; then
-    LATEST_JSON=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/releases/latest")
-else
-    LATEST_JSON=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
-fi
-LATEST_TAG=$(echo "$LATEST_JSON" | jq -r .tag_name)
+# Get latest release data (authenticated to avoid rate limits).
+# Retry on transient network/API failures so one hiccup does not stub the
+# version and abort the whole update.
+LATEST_TAG=""
+for attempt in 1 2 3; do
+    if [ -n "$GITHUB_TOKEN" ]; then
+        RESP=$(curl -s --retry 3 --connect-timeout 15 -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/releases/latest")
+    else
+        RESP=$(curl -s --retry 3 --connect-timeout 15 "https://api.github.com/repos/$REPO/releases/latest")
+    fi
+    LATEST_TAG=$(echo "$RESP" | jq -r '.tag_name')
+    if [ -n "$LATEST_TAG" ] && [ "$LATEST_TAG" != "null" ]; then
+        break
+    fi
+    echo "   Retry $attempt: could not fetch latest tag from GitHub..."
+    sleep 5
+done
 NEW_VER="${LATEST_TAG#v}"
 
 if [ -z "$NEW_VER" ] || [ "$NEW_VER" == "null" ]; then

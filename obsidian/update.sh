@@ -7,13 +7,22 @@ PACKAGER="Ackerman-00 <quietcraft@gmail.com>"
 
 echo "🔍 Checking for upstream updates on $GITHUB_REPO..."
 
-if [ -n "$GITHUB_TOKEN" ]; then
-    API_RESPONSE=$(curl -sL -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$GITHUB_REPO/releases/latest")
-else
-    API_RESPONSE=$(curl -sL "https://api.github.com/repos/$GITHUB_REPO/releases/latest")
-fi
-
-LATEST_TAG=$(echo "$API_RESPONSE" | jq -r '.tag_name')
+# Retry on transient network/API failures so one hiccup does not stub the
+# version and abort the whole update.
+LATEST_TAG=""
+for attempt in 1 2 3; do
+    if [ -n "$GITHUB_TOKEN" ]; then
+        API_RESPONSE=$(curl -sL --retry 3 --connect-timeout 15 -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$GITHUB_REPO/releases/latest")
+    else
+        API_RESPONSE=$(curl -sL --retry 3 --connect-timeout 15 "https://api.github.com/repos/$GITHUB_REPO/releases/latest")
+    fi
+    LATEST_TAG=$(echo "$API_RESPONSE" | jq -r '.tag_name')
+    if [ -n "$LATEST_TAG" ] && [ "$LATEST_TAG" != "null" ]; then
+        break
+    fi
+    echo "   Retry $attempt: could not fetch latest tag from GitHub..."
+    sleep 5
+done
 LATEST_VER="${LATEST_TAG#v}" # Strip the 'v' prefix
 
 if [ -z "$LATEST_VER" ] || [ "$LATEST_VER" == "null" ]; then
