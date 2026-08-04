@@ -2,7 +2,7 @@ name: opencode-schedule
 
 on:
   schedule:
-    - cron: '20 */2 * * *'   # Every 2 hours (20 min after updater)
+    - cron: '20 */10 * * *'   # Every 10 hours (20 min after updater)
   workflow_dispatch:
     inputs:
       relay:
@@ -81,7 +81,7 @@ jobs:
             - Each package lives in its own directory with a .spec file, a .changes
               file (openSUSE changelog), often an update.sh (an upstream-check script)
               and a _service file. update-packages.yml (GitHub Actions, "Nexus
-              Auto-Updater (OBS Pipeline)") runs every 2 hours (cron '0 */2 * * *',
+              Auto-Updater (OBS Pipeline)") runs every 10 hours (cron '0 */10 * * *',
               minute 0), i.e. 20 minutes before this workflow: it runs update.sh for
               packages that have one and scans the rest against GitHub release tags,
               bumping spec versions and committing to main directly, then syncs changed
