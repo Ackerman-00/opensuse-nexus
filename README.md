@@ -55,7 +55,7 @@ Or **[browse all packages and their builds online](https://build.opensuse.org/pr
 | **niri-git** | Scrollable-tiling Wayland compositor | `sudo zypper install niri-git` |
 | **obsidian** | Knowledge base for plain-text Markdown notes | `sudo zypper install obsidian` |
 | **opencode-desktop** | Open source AI coding agent | `sudo zypper install opencode-desktop` |
-| **rootapp** | Run GUI apps as root via Polkit | `sudo zypper install rootapp` |
+| **rootapp** | Discord alternative for gaming communities and large groups | `sudo zypper install rootapp` |
 | **scenefx** | Drop-in wlroots scene API replacement with eye-candy effects | `sudo zypper install libscenefx-0_5` |
 | **stb** | Single-file public domain libraries for C/C++ | `sudo zypper install stb-devel` |
 | **vesktop** | Custom Discord client with Vencord preinstalled | `sudo zypper install vesktop` |
