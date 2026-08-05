@@ -10,6 +10,7 @@ echo "🔍 Checking for updates..."
 # Retry on transient network/API failures so one hiccup does not stub the
 # version and abort the whole update.
 LATEST_TAG=""
+LATEST_JSON=""
 for attempt in 1 2 3; do
     if [ -n "$GITHUB_TOKEN" ]; then
         RESP=$(curl -s --retry 3 --connect-timeout 15 -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/releases/latest")
@@ -18,6 +19,7 @@ for attempt in 1 2 3; do
     fi
     LATEST_TAG=$(echo "$RESP" | jq -r '.tag_name')
     if [ -n "$LATEST_TAG" ] && [ "$LATEST_TAG" != "null" ]; then
+        LATEST_JSON="$RESP"
         break
     fi
     echo "   Retry $attempt: could not fetch latest tag from GitHub..."
