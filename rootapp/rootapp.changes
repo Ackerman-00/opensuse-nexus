@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Aug 06 01:45:54 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Update to 0.9.126 (sha256: 0736926fde923819d276ac6d4a3afe65c6d87c734689af47276fc4ebf075d910)
+
+-------------------------------------------------------------------
 Sun Aug 02 18:50:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Fix unresolvable Fedora package names in Requires: libXScrnSaver1,
