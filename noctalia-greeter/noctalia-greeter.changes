@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Aug 07 00:50:34 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Update to upstream version 1.2.1
+
+-------------------------------------------------------------------
 Sun Aug 02 23:32:38 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Add missing direct BuildRequires (cairo-ft, pangocairo, pangoft2,
