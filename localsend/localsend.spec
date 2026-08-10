@@ -1,8 +1,8 @@
 %global debug_package %{nil}
 
 # Prevent RPM from trying to auto-generate dependencies from the bundled Flutter libraries
-%global __requires_exclude_from ^/usr/share/localsend_app/.*$
-%global __provides_exclude_from ^/usr/share/localsend_app/.*$
+%global __requires_exclude_from ^/opt/localsend_app/.*$
+%global __provides_exclude_from ^/opt/localsend_app/.*$
 
 Name:           localsend
 Version:        1.18.0
@@ -60,11 +60,15 @@ rm -rf %{buildroot}
 install -d -m 0755 %{buildroot}%{_datadir}
 cp -a usr/share/* %{buildroot}%{_datadir}/
 
-# 2. Create the launcher wrapper (upstream DEB ships no /usr/bin entry)
+# 2. Install the Flutter app payload (1.18.0+ ships it under /opt)
+install -d -m 0755 %{buildroot}/opt
+cp -a opt/localsend_app %{buildroot}/opt/
+
+# 3. Create the launcher wrapper (upstream DEB ships no /usr/bin entry)
 install -d -m 0755 %{buildroot}%{_bindir}
 cat <<-'EOF' > %{buildroot}%{_bindir}/localsend_app
 #!/bin/sh
-exec /usr/share/localsend_app/localsend_app "$@"
+exec /opt/localsend_app/localsend_app "$@"
 EOF
 chmod 0755 %{buildroot}%{_bindir}/localsend_app
 
@@ -76,6 +80,6 @@ chmod 0755 %{buildroot}%{_bindir}/localsend_app
 %dir %{_datadir}/icons/hicolor/*
 %dir %{_datadir}/icons/hicolor/*/apps
 %{_datadir}/icons/hicolor/*/apps/localsend_app.png
-%{_datadir}/localsend_app/
+/opt/localsend_app/
 
 %changelog
