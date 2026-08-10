@@ -20,6 +20,7 @@ ExclusiveArch:  x86_64
 # Required to unpack the upstream DEB natively
 BuildRequires:  binutils
 BuildRequires:  tar
+BuildRequires:  zstd
 
 # Explicit dependencies mapped from the upstream DEB to openSUSE
 # (libappindicator3-1 | libayatana-appindicator3-1 -> libayatana-appindicator3-1,
@@ -38,9 +39,16 @@ This version natively extracts the upstream DEB payload.
 
 %prep
 %setup -c -T
-# Rip open the upstream DEB natively
+# Rip open the upstream DEB natively (data.tar may be .xz or .zst)
 ar x %{SOURCE0}
-tar xf data.tar.xz
+if [ -f data.tar.xz ]; then
+  tar xf data.tar.xz
+elif [ -f data.tar.zst ]; then
+  tar --zstd -xf data.tar.zst
+else
+  echo "ERROR: unexpected data.tar compression in upstream DEB" >&2
+  exit 1
+fi
 
 %build
 # No compilation required for pre-built binaries

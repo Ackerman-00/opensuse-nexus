@@ -1,5 +1,6 @@
 * Mon Aug 10 2026 Ackerman-00 <quietcraft@gmail.com> - 1.18.0-0
 - Update localsend to v1.18.0
+- Handle data.tar.zst compression in upstream DEB (1.18.0 switched from .xz)
 
 * Sun Aug 02 2026 Ackerman-00 <quietcraft@gmail.com> - 1.17.0-0
 - Own hicolor icon theme directories to fix OBS "directories not owned" build failure
