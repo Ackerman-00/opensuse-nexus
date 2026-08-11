@@ -7,8 +7,14 @@ PACKAGER="Ackerman-00 <quietcraft@gmail.com>"
 
 echo "Checking for upstream updates on $GITHUB_REPO..."
 
-# Get latest tag via git ls-remote (no rate limit)
-LATEST_TAG=$(git ls-remote --tags https://github.com/$GITHUB_REPO.git 2>/dev/null | awk '{print $2}' | sed 's|refs/tags/||;s/\^{}//' | grep -E '^v?[0-9]' | sort -V | tail -1)
+# Get the latest version from the GitHub releases API. Using the API (not
+# git ls-remote) guarantees the tag is a real release with downloadable
+# assets: LocalSend sometimes pushes a bare tag (e.g. v1.18.1) that has no
+# release, and ls-remote + sort -V would happily pick it up and ship a
+# spec pointing at a 404 asset.
+LATEST_TAG=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+  "https://api.github.com/repos/$GITHUB_REPO/releases/latest" \
+  | grep -oP '"tag_name":\s*"\K[^"]+')
 
 if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" == "null" ]; then
     echo "Error: Failed to fetch LocalSend version from GitHub. Check API limits or connection."
@@ -23,6 +29,15 @@ CURRENT_VERSION=$(grep -E "^Version:" "$SPEC_FILE" | awk '{print $2}')
 
 if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
     echo "Already up to date ($CURRENT_VERSION)."
+    exit 0
+fi
+
+# Defensive check: the release asset must actually exist before we bump.
+SOURCE_URL="https://github.com/$GITHUB_REPO/releases/download/$LATEST_TAG/LocalSend-$LATEST_VERSION-linux-x86-64.deb"
+HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 30 "$SOURCE_URL")
+if [ "$HTTP_CODE" != "200" ]; then
+    echo "Release asset $SOURCE_URL returns HTTP $HTTP_CODE (not 200); not bumping to avoid a broken spec."
+    echo "Staying on $CURRENT_VERSION."
     exit 0
 fi
 
