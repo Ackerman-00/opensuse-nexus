@@ -67,7 +67,7 @@ Or **[browse all packages and their builds online](https://build.opensuse.org/pr
 
 ## Build status
 
-Automated OBS builds are triggered on every push to `main` (via the `update-packages.yml` pipeline) and every ~2h the autonomous opencode maintainer verifies and repairs failed builds.
+Automated OBS builds are triggered on every push to `main` (via the `update-packages.yml` pipeline, runs every 10h) and the autonomous opencode maintainer verifies and repairs failed builds on the same schedule.
 
 | Project | Status |
 |---|---|
