@@ -1,2 +1,5 @@
+* Tue Aug 11 2026 Ackerman-00 <quietcraft@gmail.com> - 2026.810.212541-0
+- Update fluxer to v2026.810.212541
+
 * Sun Aug 02 2026 Ackerman-00 <quietcraft@gmail.com> - 2026.731.153836-0
 - Add missing runtime dependencies for the bundled Electron runtime (NSS, NSPr, libgbm, libasound, GTK, CUPS, etc.) so the app launches
