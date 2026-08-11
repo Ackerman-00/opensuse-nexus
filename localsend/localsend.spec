@@ -26,6 +26,7 @@ BuildRequires:  zstd
 # (libappindicator3-1 | libayatana-appindicator3-1 -> libayatana-appindicator3-1,
 #  libayatana-ido3-0.4-0 -> libayatana-ido3-0_4-0, xdg-user-dirs, libc6 -> glibc)
 Requires:       libayatana-appindicator3.so.1()(64bit)
+Requires:       libayatana-indicator3.so.7()(64bit)
 Requires:       libayatana-ido3-0.4.so.0()(64bit)
 Requires:       xdg-user-dirs
 
