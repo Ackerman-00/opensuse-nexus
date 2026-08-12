@@ -53,9 +53,6 @@ if ! [ -s "matugen-$NEW_VER.tar.gz" ] || ! tar -tzf "matugen-$NEW_VER.tar.gz" > 
     exit 1
 fi
 
-sed -i "s|^Version:.*|Version:        $NEW_VER|" "$SPEC_FILE"
-sed -i "s|^Release:.*|Release:        0|" "$SPEC_FILE"
-
 echo "📦 Generating Rust vendor tarball..."
 
 tar -xzf "matugen-$NEW_VER.tar.gz"
@@ -63,7 +60,10 @@ cd "matugen-$NEW_VER" || exit 1
 
 # Generate vendor directory and config
 echo "⚙️  Vendoring cargo dependencies..."
-cargo vendor > ../cargo_config
+if ! cargo vendor > ../cargo_config; then
+    echo "❌ cargo vendor failed; spec left untouched."
+    exit 1
+fi
 
 # Compress the vendor directory
 echo "🗜️  Compressing vendor tarball..."
@@ -72,6 +72,15 @@ tar -cJf ../vendor.tar.xz vendor
 # Cleanup
 cd ..
 rm -rf "matugen-$NEW_VER"
+
+if ! [ -s vendor.tar.xz ] || ! [ -s cargo_config ]; then
+    echo "❌ Vendor tarball/config missing; spec left untouched."
+    exit 1
+fi
+
+# Update the spec (last, so a failure above leaves git/OBS untouched)
+sed -i "s|^Version:.*|Version:        $NEW_VER|" "$SPEC_FILE"
+sed -i "s|^Release:.*|Release:        0|" "$SPEC_FILE"
 
 echo "📝 Updating changelog..."
 FORMATTED_DATE=$(LC_ALL=C date +"%a %b %d %T UTC %Y")

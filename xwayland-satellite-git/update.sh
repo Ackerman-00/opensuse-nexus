@@ -42,7 +42,32 @@ if ! [ -s "xwayland-satellite-$SHORT_COMMIT.tar.gz" ] || ! tar -tzf "xwayland-sa
     exit 1
 fi
 
-# 1. Update the spec file globals natively
+# 1. Vendor Rust dependencies (BEFORE any spec/changes edit, so a failure
+#    anywhere leaves git and OBS untouched)
+echo "📦 Generating Rust vendor tarball..."
+rm -f vendor.tar.xz cargo_config
+
+tar -xzf "xwayland-satellite-$SHORT_COMMIT.tar.gz"
+cd "xwayland-satellite-$LATEST_COMMIT" || exit 1
+
+echo "⚙️  Vendoring cargo dependencies (This might take a minute)..."
+if ! cargo vendor > ../cargo_config; then
+    echo "❌ cargo vendor failed; spec left untouched."
+    exit 1
+fi
+
+echo "🗜️  Compressing vendor tarball..."
+tar -cJf ../vendor.tar.xz vendor
+
+cd ..
+rm -rf "xwayland-satellite-$LATEST_COMMIT"
+
+if ! [ -s vendor.tar.xz ] || ! [ -s cargo_config ]; then
+    echo "❌ Vendor tarball/config missing; spec left untouched."
+    exit 1
+fi
+
+# 2. Update the spec file globals natively
 sed -i -E "s/^%global commit.*/%global commit          $LATEST_COMMIT/" "$SPEC_FILE"
 sed -i -E "s/^%global shortcommit.*/%global shortcommit     $SHORT_COMMIT/" "$SPEC_FILE"
 sed -i -E "s/^%global gitdate.*/%global gitdate         $LATEST_DATE/" "$SPEC_FILE"
@@ -54,22 +79,6 @@ if [ -n "$UPSTREAM_VERSION" ]; then
     sed -i -E "s/^Version:[[:space:]]+.*/Version:        ${UPSTREAM_VERSION}+git%{gitdate}.%{shortcommit}/" "$SPEC_FILE"
     echo "Version prefix synced to upstream $UPSTREAM_VERSION"
 fi
-
-# 2. Download source and vendor Rust dependencies
-echo "📦 Generating Rust vendor tarball..."
-rm -f vendor.tar.xz cargo_config
-
-tar -xzf "xwayland-satellite-$SHORT_COMMIT.tar.gz"
-cd "xwayland-satellite-$LATEST_COMMIT" || exit 1
-
-echo "⚙️  Vendoring cargo dependencies (This might take a minute)..."
-cargo vendor > ../cargo_config
-
-echo "🗜️  Compressing vendor tarball..."
-tar -cJf ../vendor.tar.xz vendor
-
-cd ..
-rm -rf "xwayland-satellite-$LATEST_COMMIT"
 
 # 3. Generate OBS Changes File
 echo "📝 Generating OBS changes file..."

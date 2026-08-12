@@ -46,22 +46,8 @@ if ! [ -s "niri-$SHORT_COMMIT.tar.gz" ] || ! tar -tzf "niri-$SHORT_COMMIT.tar.gz
 fi
 echo "✅ Source tarball verified: $(du -h "niri-$SHORT_COMMIT.tar.gz" | cut -f1)"
 
-# 1. Update the spec file globals natively (Version is compiled dynamically in the spec now)
-sed -i -E "s/^%global commit.*/%global commit          $LATEST_COMMIT/" "$SPEC_FILE"
-sed -i -E "s/^%global shortcommit.*/%global shortcommit     $SHORT_COMMIT/" "$SPEC_FILE"
-sed -i -E "s/^%global gitdate.*/%global gitdate         $LATEST_DATE/" "$SPEC_FILE"
-sed -i -E "s/^Release:.*/Release:        0/" "$SPEC_FILE"
-
-# Keep the Version prefix in sync with upstream's calendar-version scheme
-# (Cargo.toml "26.4.0" -> tag v26.04 - minor zero-padded, trailing .0 dropped)
-UPSTREAM_VERSION=$(curl -fsSL --retry 3 --connect-timeout 20 "https://raw.githubusercontent.com/$GITHUB_REPO/$LATEST_COMMIT/Cargo.toml" | grep -A8 "^\[workspace.package\]" | grep -m1 "^version" | sed 's/version *= *"\([^"]*\)".*/\1/')
-if [ -n "$UPSTREAM_VERSION" ]; then
-    PREFIX=$(echo "$UPSTREAM_VERSION" | awk -F. '{m=$2+0; buf=sprintf("%d.%02d", $1, m); if ($3 != "" && $3+0 != 0) buf=buf "." $3; print buf}')
-    sed -i -E "s/^Version:[[:space:]]+.*/Version:        ${PREFIX}+git%{gitdate}.%{shortcommit}/" "$SPEC_FILE"
-    echo "Version prefix synced to upstream $PREFIX"
-fi
-
-# 2. Generate the Rust vendor tarball
+# 1. Generate the Rust vendor tarball (BEFORE any spec/changes edit, so a
+#    failure anywhere leaves git and OBS untouched)
 echo "📦 Extracting source and generating Rust vendor tarball..."
 rm -f vendor.tar.xz cargo_config
 tar -xzf "niri-$SHORT_COMMIT.tar.gz"
@@ -81,6 +67,21 @@ rm -rf "niri-$LATEST_COMMIT"
 if ! [ -s vendor.tar.xz ] || ! [ -s cargo_config ]; then
     echo "❌ Vendor tarball/config missing; OBS sources left untouched."
     exit 1
+fi
+
+# 2. Update the spec file globals natively (Version is compiled dynamically in the spec now)
+sed -i -E "s/^%global commit.*/%global commit          $LATEST_COMMIT/" "$SPEC_FILE"
+sed -i -E "s/^%global shortcommit.*/%global shortcommit     $SHORT_COMMIT/" "$SPEC_FILE"
+sed -i -E "s/^%global gitdate.*/%global gitdate         $LATEST_DATE/" "$SPEC_FILE"
+sed -i -E "s/^Release:.*/Release:        0/" "$SPEC_FILE"
+
+# Keep the Version prefix in sync with upstream's calendar-version scheme
+# (Cargo.toml "26.4.0" -> tag v26.04 - minor zero-padded, trailing .0 dropped)
+UPSTREAM_VERSION=$(curl -fsSL --retry 3 --connect-timeout 20 "https://raw.githubusercontent.com/$GITHUB_REPO/$LATEST_COMMIT/Cargo.toml" | grep -A8 "^\[workspace.package\]" | grep -m1 "^version" | sed 's/version *= *"\([^"]*\)".*/\1/')
+if [ -n "$UPSTREAM_VERSION" ]; then
+    PREFIX=$(echo "$UPSTREAM_VERSION" | awk -F. '{m=$2+0; buf=sprintf("%d.%02d", $1, m); if ($3 != "" && $3+0 != 0) buf=buf "." $3; print buf}')
+    sed -i -E "s/^Version:[[:space:]]+.*/Version:        ${PREFIX}+git%{gitdate}.%{shortcommit}/" "$SPEC_FILE"
+    echo "Version prefix synced to upstream $PREFIX"
 fi
 
 # 3. Generate OBS Changes File
