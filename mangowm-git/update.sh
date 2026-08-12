@@ -41,6 +41,13 @@ sed -i -E "s/^%global shortcommit.*/%global shortcommit     $SHORT_COMMIT/" "$SP
 sed -i -E "s/^%global gitdate.*/%global gitdate         $LATEST_DATE/" "$SPEC_FILE"
 sed -i -E "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 
+# Keep the Version prefix in sync with the upstream project version
+UPSTREAM_VERSION=$(curl -sL "https://raw.githubusercontent.com/$GITHUB_REPO/$LATEST_COMMIT/meson.build" | grep -E "^[[:space:]]*version[[:space:]]*:" | head -1 | sed "s/.*'\([^']*\)'.*/\1/")
+if [ -n "$UPSTREAM_VERSION" ]; then
+    sed -i -E "s/^Version:[[:space:]]+.*/Version:        ${UPSTREAM_VERSION}+git%{gitdate}.%{shortcommit}/" "$SPEC_FILE"
+    echo "Version prefix synced to upstream $UPSTREAM_VERSION"
+fi
+
 echo "Generating OBS changes file..."
 FORMATTED_DATE=$(LC_ALL=C date +"%a %b %d %T UTC %Y")
 NEW_CHANGELOG_ENTRY="-------------------------------------------------------------------\n$FORMATTED_DATE - $PACKAGER\n\n- Nightly sync with upstream main branch (Commit: $SHORT_COMMIT)\n\n"
