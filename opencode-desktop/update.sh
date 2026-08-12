@@ -24,6 +24,17 @@ fi
 
 echo "Update found: $CURRENT_VERSION -> $LATEST_VERSION"
 
+# Defensive check: the DEB asset must actually exist before we bump from a
+# git tag (upstream frequently tags releases while the desktop DEB asset is
+# still uploading, which would ship a spec pointing at a 404).
+SOURCE_URL="https://github.com/$GITHUB_REPO/releases/download/v$LATEST_VERSION/opencode-desktop-linux-amd64.deb"
+HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 30 "$SOURCE_URL")
+if [ "$HTTP_CODE" != "200" ]; then
+    echo "Release asset $SOURCE_URL returns HTTP $HTTP_CODE (not 200); not bumping to avoid a broken spec."
+    echo "Staying on $CURRENT_VERSION."
+    exit 0
+fi
+
 sed -i "s/^Version:.*/Version:        $LATEST_VERSION/" "$SPEC_FILE"
 sed -i "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 
