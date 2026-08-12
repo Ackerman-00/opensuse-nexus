@@ -32,7 +32,12 @@ fi
 
 echo "Downloading source tarball ($SHORT_COMMIT)..."
 rm -f mango-*.tar.gz
-curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "mango-$SHORT_COMMIT.tar.gz"
+curl -fsSL --retry 3 --connect-timeout 20 "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "mango-$SHORT_COMMIT.tar.gz" \
+    || { echo "❌ Download failed; spec left untouched."; exit 1; }
+if ! [ -s "mango-$SHORT_COMMIT.tar.gz" ] || ! tar -tzf "mango-$SHORT_COMMIT.tar.gz" > /dev/null 2>&1; then
+    echo "❌ Downloaded tarball is empty or corrupt; spec left untouched."
+    exit 1
+fi
 
 echo "Update found: ${CURRENT_COMMIT:0:7} -> $SHORT_COMMIT"
 

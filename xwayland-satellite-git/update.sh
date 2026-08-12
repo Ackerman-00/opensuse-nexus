@@ -32,6 +32,16 @@ fi
 
 echo "🚀 Update found: ${CURRENT_COMMIT:0:7} -> $SHORT_COMMIT"
 
+# 0. Download and VERIFY the source tarball BEFORE touching the spec.
+echo "📦 Downloading source..."
+rm -f xwayland-satellite-*.tar.gz
+curl -fsSL --retry 3 --connect-timeout 20 "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "xwayland-satellite-$SHORT_COMMIT.tar.gz" \
+    || { echo "❌ Download failed; spec left untouched."; exit 1; }
+if ! [ -s "xwayland-satellite-$SHORT_COMMIT.tar.gz" ] || ! tar -tzf "xwayland-satellite-$SHORT_COMMIT.tar.gz" > /dev/null 2>&1; then
+    echo "❌ Downloaded tarball is empty or corrupt; spec left untouched."
+    exit 1
+fi
+
 # 1. Update the spec file globals natively
 sed -i -E "s/^%global commit.*/%global commit          $LATEST_COMMIT/" "$SPEC_FILE"
 sed -i -E "s/^%global shortcommit.*/%global shortcommit     $SHORT_COMMIT/" "$SPEC_FILE"
@@ -46,9 +56,8 @@ if [ -n "$UPSTREAM_VERSION" ]; then
 fi
 
 # 2. Download source and vendor Rust dependencies
-echo "📦 Downloading source and generating Rust vendor tarball..."
-rm -f xwayland-satellite-*.tar.gz vendor.tar.xz cargo_config
-curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "xwayland-satellite-$SHORT_COMMIT.tar.gz"
+echo "📦 Generating Rust vendor tarball..."
+rm -f vendor.tar.xz cargo_config
 
 tar -xzf "xwayland-satellite-$SHORT_COMMIT.tar.gz"
 cd "xwayland-satellite-$LATEST_COMMIT" || exit 1

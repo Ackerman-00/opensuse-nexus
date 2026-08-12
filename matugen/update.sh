@@ -42,11 +42,21 @@ if [ "$NEW_VER" == "$CURRENT_VER" ]; then
 fi
 
 echo "🚀 New version found! Updating $SPEC_FILE..."
+
+# 0. Download and VERIFY the source tarball BEFORE touching the spec.
+echo "📦 Downloading source tarball..."
+rm -f "matugen-$NEW_VER.tar.gz"
+curl -fsSL --retry 3 --connect-timeout 20 "https://github.com/$REPO/archive/refs/tags/$LATEST_TAG.tar.gz" -o "matugen-$NEW_VER.tar.gz" \
+    || { echo "❌ Download failed; spec left untouched."; exit 1; }
+if ! [ -s "matugen-$NEW_VER.tar.gz" ] || ! tar -tzf "matugen-$NEW_VER.tar.gz" > /dev/null 2>&1; then
+    echo "❌ Downloaded tarball is empty or corrupt; spec left untouched."
+    exit 1
+fi
+
 sed -i "s|^Version:.*|Version:        $NEW_VER|" "$SPEC_FILE"
 sed -i "s|^Release:.*|Release:        0|" "$SPEC_FILE"
 
-echo "📦 Downloading source and generating Rust vendor tarball..."
-curl -sL "https://github.com/$REPO/archive/refs/tags/$LATEST_TAG.tar.gz" -o "matugen-$NEW_VER.tar.gz"
+echo "📦 Generating Rust vendor tarball..."
 
 tar -xzf "matugen-$NEW_VER.tar.gz"
 cd "matugen-$NEW_VER" || exit 1

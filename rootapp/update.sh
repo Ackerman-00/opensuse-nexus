@@ -10,7 +10,12 @@ echo "Checking for rootapp updates..."
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
-curl -sL -o "$TMPDIR/Root.AppImage" "$APPIMAGE_URL"
+curl -fsSL --retry 3 --connect-timeout 20 -o "$TMPDIR/Root.AppImage" "$APPIMAGE_URL" \
+    || { echo "❌ AppImage download failed; spec left untouched."; exit 1; }
+if ! [ -s "$TMPDIR/Root.AppImage" ] || ! head -c4 "$TMPDIR/Root.AppImage" | grep -q $'\x7fELF'; then
+    echo "❌ Downloaded AppImage is empty or not an ELF; spec left untouched."
+    exit 1
+fi
 NEW_SHA=$(sha256sum "$TMPDIR/Root.AppImage" | awk '{print $1}')
 
 CURRENT_VERSION=$(grep -E "^Version:" "$SPEC_FILE" | awk '{print $2}')

@@ -31,17 +31,22 @@ fi
 
 echo "Update found: $CURRENT_VER -> $LATEST_VER"
 
+# 0. Download and VERIFY the source tarball BEFORE touching the spec.
+echo "Downloading source tarball ($LATEST_VER)..."
+rm -f noctalia-greeter-*.tar.gz
+curl -fsSL --retry 3 --connect-timeout 20 "https://github.com/$GITHUB_REPO/archive/refs/tags/$LATEST_TAG/noctalia-greeter-$LATEST_VER.tar.gz" \
+    -o "noctalia-greeter-$LATEST_VER.tar.gz" \
+    || { echo "❌ Download failed; spec left untouched."; exit 1; }
+if ! [ -s "noctalia-greeter-$LATEST_VER.tar.gz" ] || ! tar -tzf "noctalia-greeter-$LATEST_VER.tar.gz" > /dev/null 2>&1; then
+    echo "❌ Downloaded tarball is empty or corrupt; spec left untouched."
+    exit 1
+fi
+
 # 1. Update the spec file
 sed -i -E "s/^Version:.*/Version:        $LATEST_VER/" "$SPEC_FILE"
 sed -i -E "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 
-# 2. Download the source tarball
-echo "Downloading source tarball ($LATEST_VER)..."
-rm -f noctalia-greeter-*.tar.gz
-curl -sL "https://github.com/$GITHUB_REPO/archive/refs/tags/$LATEST_TAG/noctalia-greeter-$LATEST_VER.tar.gz" \
-    -o "noctalia-greeter-$LATEST_VER.tar.gz"
-
-# 3. Generate OBS Changes File
+# 2. Generate OBS Changes File
 echo "Generating OBS changes file..."
 FORMATTED_DATE=$(LC_ALL=C date +"%a %b %d %T UTC %Y")
 NEW_CHANGELOG_ENTRY="-------------------------------------------------------------------\n$FORMATTED_DATE - $PACKAGER\n\n- Update to upstream version $LATEST_VER\n\n"

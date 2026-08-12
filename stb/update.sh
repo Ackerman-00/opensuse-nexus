@@ -35,14 +35,21 @@ fi
 
 echo "Update found: $CURRENT_VER -> $LATEST_VER"
 
+# 0. Download and VERIFY the source before touching the spec.
+echo "Downloading source tarball ($LATEST_VER, commit $LATEST_COMMIT)..."
+rm -f stb-*.tar.xz stb-*.tar.gz
+curl -fsSL --retry 3 --connect-timeout 20 "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "stb-$LATEST_VER.tar.gz" \
+    || { echo "❌ Download failed; spec left untouched."; exit 1; }
+if ! [ -s "stb-$LATEST_VER.tar.gz" ] || ! tar -tzf "stb-$LATEST_VER.tar.gz" > /dev/null 2>&1; then
+    echo "❌ Downloaded tarball is empty or corrupt; spec left untouched."
+    exit 1
+fi
+
 # 1. Update the spec file
 sed -i -E "s/^Version:.*/Version:        $LATEST_VER/" "$SPEC_FILE"
 sed -i -E "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 
-# 2. Download the source tarball (GitHub archives use the commit sha as dir name)
-echo "Downloading source tarball ($LATEST_VER, commit $LATEST_COMMIT)..."
-rm -f stb-*.tar.xz
-curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "stb-$LATEST_VER.tar.gz"
+# 2. Repackage the source as .tar.xz (GitHub archives use the commit sha as dir name)
 tar -xzf "stb-$LATEST_VER.tar.gz"
 mv "stb-$LATEST_COMMIT" "stb-$LATEST_VER"
 tar -cJf "stb-$LATEST_VER.tar.xz" "stb-$LATEST_VER"

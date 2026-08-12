@@ -32,6 +32,20 @@ fi
 
 echo "🚀 Update found: ${CURRENT_COMMIT:0:7} -> $SHORT_COMMIT"
 
+# 0. Download and VERIFY the source tarball BEFORE touching the spec. If the
+#    download fails, we exit non-zero with zero file changes so neither git nor
+#    OBS ever receives a spec pointing at a missing tarball (the workflow's
+#    sync step would otherwise delete the previous good tarball from OBS).
+echo "📦 Downloading source tarball..."
+rm -f "niri-$SHORT_COMMIT.tar.gz"
+curl -fsSL --retry 3 --connect-timeout 20 "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "niri-$SHORT_COMMIT.tar.gz" \
+    || { echo "❌ Download failed; OBS sources left untouched."; exit 1; }
+if ! [ -s "niri-$SHORT_COMMIT.tar.gz" ] || ! tar -tzf "niri-$SHORT_COMMIT.tar.gz" > /dev/null 2>&1; then
+    echo "❌ Downloaded tarball is empty or corrupt; OBS sources left untouched."
+    exit 1
+fi
+echo "✅ Source tarball verified: $(du -h "niri-$SHORT_COMMIT.tar.gz" | cut -f1)"
+
 # 1. Update the spec file globals natively (Version is compiled dynamically in the spec now)
 sed -i -E "s/^%global commit.*/%global commit          $LATEST_COMMIT/" "$SPEC_FILE"
 sed -i -E "s/^%global shortcommit.*/%global shortcommit     $SHORT_COMMIT/" "$SPEC_FILE"
@@ -40,29 +54,34 @@ sed -i -E "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 
 # Keep the Version prefix in sync with upstream's calendar-version scheme
 # (Cargo.toml "26.4.0" -> tag v26.04 - minor zero-padded, trailing .0 dropped)
-UPSTREAM_VERSION=$(curl -sL "https://raw.githubusercontent.com/$GITHUB_REPO/$LATEST_COMMIT/Cargo.toml" | grep -A8 "^\[workspace.package\]" | grep -m1 "^version" | sed 's/version *= *"\([^"]*\)".*/\1/')
+UPSTREAM_VERSION=$(curl -fsSL --retry 3 --connect-timeout 20 "https://raw.githubusercontent.com/$GITHUB_REPO/$LATEST_COMMIT/Cargo.toml" | grep -A8 "^\[workspace.package\]" | grep -m1 "^version" | sed 's/version *= *"\([^"]*\)".*/\1/')
 if [ -n "$UPSTREAM_VERSION" ]; then
     PREFIX=$(echo "$UPSTREAM_VERSION" | awk -F. '{m=$2+0; buf=sprintf("%d.%02d", $1, m); if ($3 != "" && $3+0 != 0) buf=buf "." $3; print buf}')
     sed -i -E "s/^Version:[[:space:]]+.*/Version:        ${PREFIX}+git%{gitdate}.%{shortcommit}/" "$SPEC_FILE"
     echo "Version prefix synced to upstream $PREFIX"
 fi
 
-# 2. Download source and vendor Rust dependencies
-echo "📦 Downloading source and generating Rust vendor tarball..."
-rm -f niri-*.tar.gz vendor.tar.xz cargo_config
-curl -sL "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "niri-$SHORT_COMMIT.tar.gz"
-
+# 2. Generate the Rust vendor tarball
+echo "📦 Extracting source and generating Rust vendor tarball..."
+rm -f vendor.tar.xz cargo_config
 tar -xzf "niri-$SHORT_COMMIT.tar.gz"
 cd "niri-$LATEST_COMMIT" || exit 1
 
 echo "⚙️  Vendoring cargo dependencies (This might take a minute)..."
-cargo vendor > ../cargo_config
+if ! cargo vendor > ../cargo_config; then
+    echo "❌ cargo vendor failed; OBS sources left untouched."
+    exit 1
+fi
 
 echo "🗜️  Compressing vendor tarball..."
 tar -cJf ../vendor.tar.xz vendor
-
 cd ..
 rm -rf "niri-$LATEST_COMMIT"
+
+if ! [ -s vendor.tar.xz ] || ! [ -s cargo_config ]; then
+    echo "❌ Vendor tarball/config missing; OBS sources left untouched."
+    exit 1
+fi
 
 # 3. Generate OBS Changes File
 echo "📝 Generating OBS changes file..."
