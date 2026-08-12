@@ -38,6 +38,13 @@ sed -i -E "s/^%global shortcommit.*/%global shortcommit     $SHORT_COMMIT/" "$SP
 sed -i -E "s/^%global gitdate.*/%global gitdate         $LATEST_DATE/" "$SPEC_FILE"
 sed -i -E "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 
+# Keep the Version prefix in sync with the upstream Cargo.toml version
+UPSTREAM_VERSION=$(curl -sL "https://raw.githubusercontent.com/$GITHUB_REPO/$LATEST_COMMIT/Cargo.toml" | grep -A3 "^\[package\]" | grep -m1 "^version" | sed 's/version *= *"\([^"]*\)".*/\1/')
+if [ -n "$UPSTREAM_VERSION" ]; then
+    sed -i -E "s/^Version:[[:space:]]+.*/Version:        ${UPSTREAM_VERSION}+git%{gitdate}.%{shortcommit}/" "$SPEC_FILE"
+    echo "Version prefix synced to upstream $UPSTREAM_VERSION"
+fi
+
 # 2. Download source and vendor Rust dependencies
 echo "📦 Downloading source and generating Rust vendor tarball..."
 rm -f xwayland-satellite-*.tar.gz vendor.tar.xz cargo_config
