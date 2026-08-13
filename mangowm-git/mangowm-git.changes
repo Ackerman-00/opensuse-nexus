@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Aug 13 03:05:57 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Nightly sync with upstream main branch (Commit: 3734691)
+
+-------------------------------------------------------------------
 Wed Aug 12 11:45:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Fix version prefix: upstream bumped to 0.16.0, spec kept 0.15.6
