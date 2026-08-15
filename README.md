@@ -47,6 +47,7 @@ Or **[browse all packages and their builds online](https://build.opensuse.org/pr
 |---|---|---|
 | **bibata-cursor-theme** | Open source, compact, material designed cursor set | `sudo zypper install bibata-cursor-theme` |
 | **fluxer** | Free and open source messaging & VoIP platform | `sudo zypper install fluxer` |
+| **helium-browser** | Private, fast, and honest Chromium-based browser | `sudo zypper install helium-browser` |
 | **localsend** | Open source cross-platform alternative to AirDrop | `sudo zypper install localsend` |
 | **mangowm-git** | Scrollable-tiling Wayland compositor (Nexus optimized) | `sudo zypper install mangowm-git` |
 | **matugen** | Material You color generation tool | `sudo zypper install matugen` |
