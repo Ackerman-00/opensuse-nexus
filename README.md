@@ -49,6 +49,7 @@ Or **[browse all packages and their builds online](https://build.opensuse.org/pr
 | **fluxer** | Free and open source messaging & VoIP platform | `sudo zypper install fluxer` |
 | **helium-browser** | Private, fast, and honest Chromium-based browser | `sudo zypper install helium-browser` |
 | **localsend** | Open source cross-platform alternative to AirDrop | `sudo zypper install localsend` |
+| **ly** | Lightweight TUI display manager | `sudo zypper install ly` |
 | **mangowm-git** | Scrollable-tiling Wayland compositor (Nexus optimized) | `sudo zypper install mangowm-git` |
 | **matugen** | Material You color generation tool | `sudo zypper install matugen` |
 | **noctalia** | Sleek minimal Wayland desktop shell | `sudo zypper install noctalia` |
