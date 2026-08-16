@@ -57,9 +57,11 @@ Or **[browse all packages and their builds online](https://build.opensuse.org/pr
 | **niri-git** | Scrollable-tiling Wayland compositor | `sudo zypper install niri-git` |
 | **obsidian** | Knowledge base for plain-text Markdown notes | `sudo zypper install obsidian` |
 | **opencode-desktop** | Open source AI coding agent | `sudo zypper install opencode-desktop` |
+| **protonplus** | Wine and Proton-based compatibility tools manager | `sudo zypper install protonplus` |
 | **rootapp** | Discord alternative for gaming communities and large groups | `sudo zypper install rootapp` |
 | **scenefx** | Drop-in wlroots scene API replacement with eye-candy effects | `sudo zypper install libscenefx-0_5` |
 | **stb** | Single-file public domain libraries for C/C++ | `sudo zypper install stb-devel` |
+| **stoat-desktop** | Open source, user-first chat platform desktop client | `sudo zypper install stoat-desktop` |
 | **vesktop** | Custom Discord client with Vencord preinstalled | `sudo zypper install vesktop` |
 | **wlroots** | Modular Wayland compositor library | `sudo zypper install libwlroots-0_20` |
 | **xwayland-satellite-git** | Rootless Xwayland integration for Wayland compositors | `sudo zypper install xwayland-satellite-git` |
