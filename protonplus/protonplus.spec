@@ -19,6 +19,8 @@ BuildRequires:  meson >= 1.0.0
 BuildRequires:  ninja
 BuildRequires:  pkgconf
 BuildRequires:  vala
+BuildRequires:  pkgconfig(appstream)
+BuildRequires:  pkgconfig(cairo)
 BuildRequires:  pkgconfig(gee-0.8)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(gtk4)

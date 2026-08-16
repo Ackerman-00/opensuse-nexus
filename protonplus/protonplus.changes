@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Sun Aug 16 07:20:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Add explicit BuildRequires pkgconfig(appstream) and
+  pkgconfig(cairo) (direct meson dependencies that were only
+  resolved transitively before)
+
+-------------------------------------------------------------------
 Sun Aug 16 06:06:44 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Initial package of ProtonPlus 0.6.4 for openSUSE
