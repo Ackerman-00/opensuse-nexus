@@ -25,7 +25,16 @@ CURRENT_COMMIT=$(grep -E "^%global commit" "$SPEC_FILE" | awk '{print $3}')
 SHORT_COMMIT=${LATEST_COMMIT:0:7}
 LATEST_DATE=$(echo "$LATEST_DATE_RAW" | sed 's/[-T:Z]//g')
 
+UP_TO_DATE=0
 if [ "$CURRENT_COMMIT" == "$LATEST_COMMIT" ]; then
+    UP_TO_DATE=1
+fi
+
+# The Source0 tarball is gitignored and never present in CI checkouts. Always
+# ensure it exists locally so the OBS sync step can upload it; if OBS ever
+# loses the tarball while the commit is unchanged, this prevents a rebuild
+# failure. The version guard above stays a pure commit comparison.
+if [ -f "mango-$SHORT_COMMIT.tar.gz" ] && [ "$UP_TO_DATE" -eq 1 ]; then
     echo "Package is already at the latest commit ($SHORT_COMMIT). No update needed."
     exit 0
 fi
@@ -37,6 +46,11 @@ curl -fsSL --retry 3 --connect-timeout 20 "https://github.com/$GITHUB_REPO/archi
 if ! [ -s "mango-$SHORT_COMMIT.tar.gz" ] || ! tar -tzf "mango-$SHORT_COMMIT.tar.gz" > /dev/null 2>&1; then
     echo "❌ Downloaded tarball is empty or corrupt; spec left untouched."
     exit 1
+fi
+
+if [ "$UP_TO_DATE" -eq 1 ]; then
+    echo "Version unchanged but tarball refreshed; only the artifact needs re-syncing to OBS."
+    exit 0
 fi
 
 echo "Update found: ${CURRENT_COMMIT:0:7} -> $SHORT_COMMIT"
