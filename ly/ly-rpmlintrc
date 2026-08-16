@@ -1,2 +1,0 @@
-addFilter("filelist-forbidden-move-to-usr")
-addFilter("no-changelogname-tag")
