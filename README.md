@@ -50,6 +50,7 @@ Or **[browse all packages and their builds online](https://build.opensuse.org/pr
 | **helium-browser** | Private, fast, and honest Chromium-based browser | `sudo zypper install helium-browser` |
 | **localsend** | Open source cross-platform alternative to AirDrop | `sudo zypper install localsend` |
 | **ly** | Lightweight TUI display manager | `sudo zypper install ly` |
+| **lazyvim-git** | Neovim setup for lazy people (rolling git snapshot) | `sudo zypper install lazyvim-git` |
 | **mangowm-git** | Scrollable-tiling Wayland compositor (Nexus optimized) | `sudo zypper install mangowm-git` |
 | **matugen** | Material You color generation tool | `sudo zypper install matugen` |
 | **noctalia** | Sleek minimal Wayland desktop shell | `sudo zypper install noctalia` |
