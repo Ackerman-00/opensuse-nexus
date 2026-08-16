@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Sat Aug 16 00:15:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Fix ly build failure: vendor Zig package-manager dependencies
+  (clap, zigini, termbox2, translate-c) as ly-zig-cache.tar.gz and
+  serve them to zig via --global-cache-dir, because OBS build
+  chroots are offline and zig's git fetches fail with
+  NameServerFailure. update.sh regenerates the cache on version
+  bumps when pinned dependency hashes change.
+
+-------------------------------------------------------------------
 Sat Aug 15 23:28:23 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Initial package of ly 1.4.1 for openSUSE (port of the home:ervin/ly OBS recipe)
