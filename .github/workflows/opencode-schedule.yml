@@ -2,7 +2,7 @@ name: opencode-schedule
 
 on:
   schedule:
-    - cron: '20 */10 * * *'   # Every 10 hours (20 min after updater)
+    - cron: '12 */6 * * *'   # Every 6 hours (12 min after updater)
   workflow_dispatch:
     inputs:
       relay:
