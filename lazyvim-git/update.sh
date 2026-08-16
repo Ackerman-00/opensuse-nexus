@@ -37,7 +37,16 @@ CURRENT_BASE=$(grep -E "^%global base_version" "$SPEC_FILE" | awk '{print $3}')
 SHORT_COMMIT=${LATEST_COMMIT:0:7}
 LATEST_DATE=$(echo "$LATEST_DATE_RAW" | sed 's/[-T:Z]//g')
 
+UP_TO_DATE=0
 if [ "$CURRENT_COMMIT" == "$LATEST_COMMIT" ] && [ "$CURRENT_BASE" == "$LATEST_BASE" ]; then
+    UP_TO_DATE=1
+fi
+
+# The Source0 tarball is gitignored and never present in CI checkouts. Always
+# ensure it exists locally so the OBS sync step can upload it; if OBS ever
+# loses the tarball while the commit is unchanged, this prevents a rebuild
+# failure. The version guard above stays a pure commit/base comparison.
+if [ -f "lazyvim-$SHORT_COMMIT.tar.gz" ] && [ "$UP_TO_DATE" -eq 1 ]; then
     echo "Package is already at the latest commit ($SHORT_COMMIT) and base version ($LATEST_BASE). No update needed."
     exit 0
 fi
@@ -45,8 +54,7 @@ fi
 if [ "$CURRENT_BASE" != "$LATEST_BASE" ]; then
     echo "Base version update: $CURRENT_BASE -> $LATEST_BASE"
 fi
-if [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ]; then
-    echo "Commit update: ${CURRENT_COMMIT:0:7} -> $SHORT_COMMIT"
+if [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ] || ! [ -f "lazyvim-$SHORT_COMMIT.tar.gz" ]; then
     echo "Downloading source tarball ($SHORT_COMMIT)..."
     rm -f lazyvim-*.tar.gz
     curl -fsSL --retry 3 --connect-timeout 20 "https://github.com/$GITHUB_REPO/archive/$LATEST_COMMIT.tar.gz" -o "lazyvim-$SHORT_COMMIT.tar.gz" \
@@ -55,6 +63,11 @@ if [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ]; then
         echo "❌ Downloaded tarball is empty or corrupt; spec left untouched."
         exit 1
     fi
+fi
+
+if [ "$UP_TO_DATE" -eq 1 ]; then
+    echo "Version unchanged but tarball refreshed; only the artifact needs re-syncing to OBS."
+    exit 0
 fi
 
 sed -i -E "s/^%global commit.*/%global commit          $LATEST_COMMIT/" "$SPEC_FILE"
