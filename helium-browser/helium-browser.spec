@@ -25,6 +25,15 @@ BuildRequires:      hicolor-icon-theme
 # www-browser convention shared by openSUSE's firefox/chromium packages
 Provides:           www-browser = %{version}-%{release}
 
+# Runtime dependencies for the bundled Chromium binary (auto-requires for
+# /opt/helium are excluded above, so list them explicitly)
+Requires:       libasound.so.2()(64bit)
+Requires:       libgbm.so.1()(64bit)
+Requires:       libnspr4.so()(64bit)
+Requires:       libnss3.so()(64bit)
+Requires:       libnssutil3.so()(64bit)
+Requires:       libsmime3.so()(64bit)
+
 Requires(post):     desktop-file-utils
 Requires(postun):   gtk3-tools
 Requires(posttrans): gtk3-tools

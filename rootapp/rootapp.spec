@@ -37,6 +37,7 @@ Requires:       libxkbcommon0
 Requires:       libwayland-client0
 Requires:       libwayland-cursor0
 Requires:       libwayland-egl1
+Requires:       libXt6
 Requires:       libXtst6
 Requires:       libXrandr2
 Requires:       libX11-6
