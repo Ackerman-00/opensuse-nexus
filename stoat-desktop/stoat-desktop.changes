@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Aug 17 01:18:31 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Update to upstream release 1.5.1
+
+-------------------------------------------------------------------
 Sun Aug 16 06:02:40 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Initial package of Stoat Desktop 1.4.2 for openSUSE (port of the fedora-nexus recipe to OBS)
