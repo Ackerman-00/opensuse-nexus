@@ -3,6 +3,11 @@ Mon Aug 17 18:56:36 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Update matugen to v4.2.0
 
+-------------------------------------------------------------------
+Mon Aug 17 18:59:30 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Enable debuginfo (remove %global debug_package %{nil}); source-built Rust package
+
 ----------------------------------------------------------------------
 Tue Jul 14 13:20:08 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 

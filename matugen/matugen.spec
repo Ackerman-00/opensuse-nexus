@@ -1,5 +1,3 @@
-%global debug_package %{nil}
-
 Name:           matugen
 Version:        4.2.0
 Release:        0
