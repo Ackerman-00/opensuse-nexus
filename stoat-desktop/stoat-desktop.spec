@@ -6,7 +6,7 @@
 %global __provides_exclude_from ^/opt/Stoat/.*$
 
 Name:           stoat-desktop
-Version:        1.5.1
+Version:        1.5.2
 Release:        0
 Summary:        Open source, user-first chat platform desktop client
 License:        AGPL-3.0-only AND MIT AND BSD-2-Clause
