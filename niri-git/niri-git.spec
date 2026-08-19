@@ -1,7 +1,7 @@
 # These will be automatically populated by update.sh
-%global commit          e9b215fef4b11ad36776553fb8bd45118ef03b03
-%global shortcommit     e9b215f
-%global gitdate         20260818151549
+%global commit          b0eb8ad8c80094de34abd88c109aea421461622b
+%global shortcommit     b0eb8ad
+%global gitdate         20260819083147
 
 Name:           niri-git
 Version:        26.04+git%{gitdate}.%{shortcommit}
