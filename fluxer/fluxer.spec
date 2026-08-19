@@ -7,13 +7,13 @@
 %global __provides_exclude_from ^/usr/lib64/%{name}/.*$
 
 Name:           fluxer
-Version:        2026.818.230856
+Version:        2026.819.10042
 Release:        0
 Summary:        Free and open source instant messaging and VoIP platform
 License:        AGPL-3.0-or-later AND BSD
 Group:          Productivity/Networking/Talk/Clients
 URL:            https://fluxer.app
-Source0:        https://api.fluxer.app/dl/desktop/stable/linux/x64/latest/rpm
+Source0:        fluxer.rpm
 Source1:        fluxer-rpmlintrc
 
 ExclusiveArch:  x86_64
