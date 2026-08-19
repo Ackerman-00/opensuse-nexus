@@ -1,6 +1,17 @@
 * Wed Aug 19 2026 GitHub Actions <actions@github.com> - 1.21.15b-0
 - Update zen-browser to v1.21.15b
 
+-------------------------------------------------------------------
+Wed Aug 19 19:06 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Fix install failure on v1.21.15b: keep the bundled NSS stack.
+  libxul.so references the NSS_3.126 versioned symbol which the system
+  mozilla-nss (3.125) does not provide, so replacing the bundled NSS
+  with system libs made zypper fail with "nothing provides
+  libnss3.so(NSS_3.126)(64bit)". Ship the bundled NSS/NSPr libs and
+  symlink only the root CA certs module (libnssckbi.so) from
+  mozilla-nss-certs.
+
 * Thu Aug 13 2026 GitHub Actions <actions@github.com> - 1.21.14b-0
 - Update zen-browser to v1.21.14b
 

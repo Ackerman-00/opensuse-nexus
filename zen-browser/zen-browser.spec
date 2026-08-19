@@ -14,16 +14,12 @@ BuildRequires:  coreutils
 BuildRequires:  desktop-file-utils
 BuildRequires:  hicolor-icon-theme
 BuildRequires:  fdupes
-BuildRequires:  mozilla-nss
 BuildRequires:  mozilla-nss-certs
-BuildRequires:  mozilla-nspr
 BuildRequires:  hunspell
 BuildRequires:  hyphen
 BuildRequires:  chrpath
 BuildRequires:  execstack
-Requires:       mozilla-nss
 Requires:       mozilla-nss-certs
-Requires:       mozilla-nspr
 Requires:       hunspell
 Requires:       hyphen
 
@@ -66,12 +62,13 @@ install -m644 %{_sourcedir}/policies.json %{buildroot}%{_libdir}/zen-browser/dis
 ln -sf /usr/share/hunspell %{buildroot}%{_libdir}/zen-browser/dictionaries
 ln -sf /usr/share/hyphen %{buildroot}%{_libdir}/zen-browser/hyphenation
 
-for lib in libnspr4.so libplc4.so libplds4.so \
-        libnss3.so libnssutil3.so libsmime3.so libssl3.so \
-        libfreeblpriv3.so libsoftokn3.so libnssckbi.so; do
-    rm -f %{buildroot}%{_libdir}/zen-browser/$lib
-    ln -sf %{_libdir}/$lib %{buildroot}%{_libdir}/zen-browser/$lib
-done
+# zen-browser bundles its own NSS/NSPr stack; libxul.so references the
+# NSS_3.126 versioned symbol which the system mozilla-nss does not provide,
+# so the bundled libs MUST be kept (do not replace them with system libs).
+# Only the root CA certs module (libnssckbi.so) is not bundled - link the
+# system one from mozilla-nss-certs.
+rm -f %{buildroot}%{_libdir}/zen-browser/libnssckbi.so
+ln -sf %{_libdir}/libnssckbi.so %{buildroot}%{_libdir}/zen-browser/libnssckbi.so
 
 # Safeguard: Only execute stack clearance if upstream shipped libonnxruntime.so
 if [ -f "%{buildroot}%{_libdir}/zen-browser/libonnxruntime.so" ]; then
