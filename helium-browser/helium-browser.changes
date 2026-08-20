@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Aug 20 01:16:01 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Update to upstream release 0.15.6.1
+
+-------------------------------------------------------------------
 Mon Aug 17 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Fix install/runtime: add missing soname Requires (libasound.so.2,

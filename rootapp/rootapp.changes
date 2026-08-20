@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Aug 20 01:16:10 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Update to 0.9.127 (sha256: 2c54d9642f6a8477518105f335aea3ef884d9fca318c847f27e6d33340c1dc9b)
+
+-------------------------------------------------------------------
 Mon Aug 17 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Add missing runtime Requires libXt6: the bundled libuiohook.so loads
