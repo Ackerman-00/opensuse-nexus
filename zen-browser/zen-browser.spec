@@ -14,6 +14,7 @@ BuildRequires:  coreutils
 BuildRequires:  desktop-file-utils
 BuildRequires:  hicolor-icon-theme
 BuildRequires:  fdupes
+BuildRequires:  mozilla-nspr
 BuildRequires:  mozilla-nss-certs
 BuildRequires:  hunspell
 BuildRequires:  hyphen

@@ -1,3 +1,10 @@
+* Thu Aug 20 2026 Ackerman-00 <quietcraft@gmail.com> - 1.21.15b-0
+
+- Fix OBS build: add BuildRequires mozilla-nspr to resolve the
+  "have choice for libnspr4.so()(64bit)" error. The bundled NSPR libs
+  make the package itself provide libnspr4/plc4/plds4, which conflicts
+  with mozilla-nspr as the provider for mozilla-nss-certs' dependencies.
+
 * Wed Aug 19 2026 GitHub Actions <actions@github.com> - 1.21.15b-0
 - Update zen-browser to v1.21.15b
 
