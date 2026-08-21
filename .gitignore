@@ -1,3 +1,4 @@
 # GitHub Actions transient state files
 .git_modified_files.txt
 .rebuild_packages.txt
+tools/__pycache__/
