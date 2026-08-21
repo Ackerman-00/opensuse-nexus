@@ -707,9 +707,17 @@ def extract_deb_control_version(path, tmp):
     for name, off, size in members:
         if re.match(r"^control\.tar\.(gz|xz|zst|bz2)$", name):
             blob = path.read_bytes()[off:off + size]
-            ctl = tmp / ("control." + name.split(".", 2)[-1])
+            ext = name.split(".", 2)[-1]
+            ctl = tmp / ("control." + ext)
             ctl.write_bytes(blob)
             try:
+                # zstd is not supported by Python's tarfile; decompress first
+                if ext == "zst":
+                    import subprocess
+                    ctl_raw = tmp / ("control_raw.tar")
+                    subprocess.run(["zstd", "-d", "-o", str(ctl_raw), str(ctl)],
+                                   check=True, capture_output=True, timeout=30)
+                    ctl = ctl_raw
                 with tarfile.open(ctl) as t:
                     names = t.getnames()
                     control_name = "control" if "control" in names else next(
