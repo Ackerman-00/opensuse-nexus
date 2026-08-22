@@ -419,6 +419,16 @@ jobs:
                  the run is not finished. State your confidence
                  (high/medium/low) for any package you could not fully verify,
                  and why.
+              h. 2026 AUTOMATED EXCELLENCE CHECKS (MANDATORY - August 2026 openSUSE - excellent .spec aka excellent specfile):
+                 For EVERY spec you touched (and for at least 5-sample of the full 21), run the modern openSUSE toolchain locally and paste output. This is how an "excellent spec" (openSUSE:Specfile_guidelines Aug 2026) is proven:
+                 - `spec-cleaner` (openSUSE:Tools, Factory dos/donts) — run `spec-cleaner <spec>`; must be clean or diff justified (one BuildRequires per line, macros not hard-coded `/usr/bin` etc.)
+                 - `rpmlint <spec>` + `rpmlint <rpm>` + `brp-check-suse`/`post-build-checks` — fix E: errors, handle badness score; OBS runs these as `rpmlint.log` after build — must be clean. See `openSUSE:Packaging_checks` for suppressing false positives via `*rpmlintrc`
+                 - `rpmspec -P --define "_topdir /tmp" <spec>` — macro expansion must exit 0; `rpmbuild -bs` must produce SRPM
+                 - `osc build --no-verify --clean` or `osc build --alternative-project home:ackerman` locally if `osc` is available, else `docker run --rm opensuse/tumbleweed zypper` path: `zypper --no-gpg-checks in` must resolve Requires; `BuildRequires: pkgconfig(foo)` preferred over `foo-devel` when pkgconfig module exists (provides: pkgconfig) — convert via `spec-cleaner`
+                 - `obs-build` `build-recipe-spec` dynamic BuildRequires: if `%generate_buildrequires` exists, verify it prints one dep per line
+                 - AutoReqProv must be left on; `%global __requires_exclude`/`__provides_exclude` only for bundled Electron/Chromium as in fluxer/zen-browser; never invent
+                 - `%autosetup -q`, `%make_build`/`%make_install`, `%find_lang`, `%config(noreplace)` per Specfile_guidelines; `Summary`/`Group`/`License` SPDX correct
+                 Log each tool's 1-line result per spec; any failure = deps-broken. Tools available via `tools/teardown-sweep.py:check_rpm_dependencies` (now does `spec-cleaner`/`rpmlint` hooks) — you may call it, but YOU do the reasoning. Teardown is done BY YOU, the agent, not by a separate pass-anyway script; sweep is auxiliary evidence, not the verdict.
 
             INSTALL-VERIFICATION SWEEP (MANDATORY - "zypper in <pkg>" MUST
             work on a real openSUSE machine, not just build on OBS). An OBS
@@ -523,6 +533,10 @@ jobs:
                  where status is one of: installable / fixed / broken-(dep)
                  / blocked-(reason). Any package you changed but did not
                  install-test is an unfinished package.
+              g. DOCKER BATTLE TEST + ALL CONTENT (MANDATORY - every binary + repo itself in a clean Tumbleweed container, not just OBS "succeeded"). This is not optional:
+                 1. FOR EVERY .rpm in OBS home:ackerman (all 21): download via `osc getbinaries` or `zypper --plus-content` + `docker run --rm opensuse/tumbleweed zypper --no-gpg-checks in --dry-run <pkg>` + real `zypper in` for at least 5 diverse per run (oldest-uncovered first, plus every touched). No manual `rpm -qp --requires` fallback is a battle test.
+                 2. ALL CONTENT: `ls -R`/`find . -type f | sort` — every `*/*.spec`, `*/*.changes`, `*/_service`, `*/update.sh`, `.github/workflows/*.yml` (`yaml.safe_load` valid), `README.md` install (`zypper addrepo` URL must match Docker path or fix README) must be checked; any file not checked = gap.
+                 3. REPO ITSELF: inside clean `opensuse/tumbleweed` container, `zypper addrepo https://download.opensuse.org/repositories/home:ackerman/openSUSE_Tumbleweed/home:ackerman.repo` + `zypper refresh` + `zypper se --repo home_akerman` must list all 21; `osc` `co`/`build` dry-run if available. Think like new openSUSE user who just added the repo — if they would hit it, you must hit it first.
 
             OPTIMIZATION DISCIPLINE (MANDATORY for every source-built
             package you touch; skip only for prebuilt/repackaged binaries,
