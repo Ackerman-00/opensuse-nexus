@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# 2026 battle-tested verifier — opensuse-nexus. Returns 0 only if agent truly finished.
+# 2026 battle-tested verifier -- opensuse-nexus. Returns 0 only if agent truly finished.
 RELAY=".opencode-relay.md"
 FAIL=0
 echo "----- VERIFICATION REPORT -----"
@@ -37,6 +37,6 @@ for spec in */*.spec; do
   if ! grep -q "^Name:" "$spec" 2>/dev/null; then echo "FAIL: $spec missing Name:"; bad=$((bad+1)); fi
 done
 if [[ "$bad" -gt 0 ]]; then echo "FAIL: $bad specs malformed"; FAIL=1; fi
-if [[ "$FAIL" -ne 0 ]]; then echo "FAIL: NOT COMPLETE — agent must continue working"; exit 1; fi
-echo "PASS: VERIFICATION PASSED — all 21 deps rows, evidence, install+battle test present"
+if [[ "$FAIL" -ne 0 ]]; then echo "FAIL: NOT COMPLETE -- agent must continue working"; exit 1; fi
+echo "PASS: VERIFICATION PASSED -- all 21 deps rows, evidence, install+battle test present"
 exit 0
