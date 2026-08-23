@@ -34,7 +34,7 @@ zypper install zen-browser
 ### List available packages
 
 ```bash
-zypper se --repo nexus
+zypper se --repo home_ackerman
 ```
 
 Or **[browse all packages and their builds online](https://build.opensuse.org/project/show/home:ackerman)**.
