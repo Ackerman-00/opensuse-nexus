@@ -14,6 +14,7 @@ Source2:        cargo_config
 
 ExclusiveArch:  x86_64 aarch64
 
+BuildRequires:  cargo
 BuildRequires:  cargo-packaging
 BuildRequires:  gcc-c++
 
