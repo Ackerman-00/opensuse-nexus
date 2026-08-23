@@ -3,7 +3,6 @@
 %global shortcommit     459a4c3
 %global gitdate         20260602133554
 %global base_version    16.0.0
-
 Name:           lazyvim-git
 Version:        %{base_version}+git%{gitdate}.%{shortcommit}
 Release:        0
@@ -11,10 +10,8 @@ Summary:        Neovim setup for lazy people (Nexus Optimized Git Snapshot)
 License:        Apache-2.0
 Group:          Productivity/Text/Editors
 URL:            https://github.com/LazyVim/LazyVim
-
 # Generated dynamically by GitHub Actions
 Source0:        lazyvim-%{shortcommit}.tar.gz
-
 BuildArch:      noarch
 
 %description
@@ -29,7 +26,6 @@ Nexus repository via automated main-branch tracking.
 # Pure configuration files, no compilation needed
 
 %install
-rm -rf %{buildroot}
 install -d -m 0755 %{buildroot}%{_datadir}/lazyvim
 cp -a init.lua lua doc queries scripts LICENSE NEWS.md %{buildroot}%{_datadir}/lazyvim/
 

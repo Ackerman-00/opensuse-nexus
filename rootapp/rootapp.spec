@@ -2,59 +2,53 @@
 %global __os_install_post %{nil}
 %global __requires_exclude_from ^/opt/rootapp/.*$
 %global __provides_exclude_from ^/opt/rootapp/.*$
-
 Name:           rootapp
 Version:        0.9.127
 Release:        0
-Summary:        A new Discord alternative, designed for gaming communities and large online groups
-
+Summary:        Discord alternative for gaming communities and large groups
 License:        Proprietary
 URL:            https://www.rootapp.com
 Source0:        https://installer.rootapp.com/installer/Linux/X64/Root.AppImage
-# sha256: 2c54d9642f6a8477518105f335aea3ef884d9fca318c847f27e6d33340c1dc9b
-
-ExclusiveArch:  x86_64
-
 BuildRequires:  binutils
-BuildRequires:  squashfs
 BuildRequires:  hicolor-icon-theme
 BuildRequires:  python3
-
-Requires:       libgtk-3.so.0()(64bit)
-Requires:       mozilla-nss
+BuildRequires:  squashfs
+Requires:       Mesa-libEGL1
 Requires:       alsa
-Requires:       libnotify.so.4()(64bit)
-Requires:       xdg-utils
 Requires:       at-spi2-core
 Requires:       hicolor-icon-theme
-Requires:       Mesa-libEGL1
-Requires:       libvulkan.so.1()(64bit)
-Requires:       mozilla-nspr
-Requires:       libpulse0
+Requires:       libX11-6
+Requires:       libXcomposite1
+Requires:       libXcursor1
+Requires:       libXdamage1
+Requires:       libXrandr2
+Requires:       libXrender1
+Requires:       libXss.so.1()(64bit)
+Requires:       libXt6
+Requires:       libXtst6
 Requires:       libgbm1
-Requires:       wl-clipboard
-Requires:       libxkbcommon0
+Requires:       libgtk-3.so.0()(64bit)
+Requires:       libnotify.so.4()(64bit)
+Requires:       libpulse0
+Requires:       libvulkan.so.1()(64bit)
 Requires:       libwayland-client0
 Requires:       libwayland-cursor0
 Requires:       libwayland-egl1
-Requires:       libXt6
-Requires:       libXtst6
-Requires:       libXrandr2
-Requires:       libX11-6
-Requires:       libXss.so.1()(64bit)
-Requires:       libXcursor1
-Requires:       libXcomposite1
-Requires:       libXdamage1
-Requires:       libXrender1
-
+Requires:       libxkbcommon0
+Requires:       mozilla-nspr
+Requires:       mozilla-nss
+Requires:       wl-clipboard
+Requires:       xdg-utils
 Provides:       rootapp = %{version}-%{release}
+# sha256: 2c54d9642f6a8477518105f335aea3ef884d9fca318c847f27e6d33340c1dc9b
+ExclusiveArch:  x86_64
 
 %description
 Root App is a new Discord alternative, designed for gaming communities and
 large online groups.
 
 %prep
-%setup -c -T
+%setup -q -c -T
 
 OFFSET=$(LC_ALL=C readelf -h %{SOURCE0} | awk 'NR==13{e_shoff=$5} NR==18{e_shentsize=$5} NR==19{e_shnum=$5} END{print e_shoff+e_shentsize*e_shnum}')
 unsquashfs -q -d squashfs-root -o "$OFFSET" %{SOURCE0}
@@ -88,7 +82,7 @@ cat > %{buildroot}%{_datadir}/applications/rootapp.desktop <<DESKTOP_EOF
 Type=Application
 Name=Root
 Comment=Root App is a new Discord alternative, designed for gaming communities and large online groups
-Exec=rootapp %U
+Exec=rootapp %{U}
 Icon=rootapp
 Terminal=false
 StartupWMClass=Root

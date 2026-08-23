@@ -6,7 +6,7 @@ License:        GPL-3.0-or-later
 Group:          System/GUI/Other
 URL:            https://github.com/ful1e5/Bibata_Cursor
 Source0:        %{url}/releases/download/v%{version}/Bibata.tar.xz
-
+BuildRequires:  fdupes
 BuildArch:      noarch
 
 %description
@@ -23,9 +23,9 @@ tar xf %{SOURCE0}
 %install
 install -d -m 0755 %{buildroot}%{_datadir}/icons
 mv Bibata-* %{buildroot}%{_datadir}/icons/
+%fdupes %{buildroot}%{_datadir}/icons
 
 %files
-%defattr(-,root,root)
 %license LICENSE
 %{_datadir}/icons/Bibata-*
 

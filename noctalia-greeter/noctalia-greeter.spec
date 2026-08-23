@@ -6,42 +6,39 @@ License:        MIT
 Group:          System/GUI/Other
 URL:            https://github.com/noctalia-dev/noctalia-greeter
 Source0:        %{url}/archive/refs/tags/v%{version}/noctalia-greeter-%{version}.tar.gz
-
-ExclusiveArch:  x86_64 aarch64
-
-BuildRequires:  meson
 BuildRequires:  gcc-c++
+BuildRequires:  meson
 BuildRequires:  pkgconfig
 BuildRequires:  wlroots-devel
+BuildRequires:  pkgconfig(cairo)
+BuildRequires:  pkgconfig(cairo-ft)
+BuildRequires:  pkgconfig(egl)
+BuildRequires:  pkgconfig(epoxy)
+BuildRequires:  pkgconfig(fontconfig)
+BuildRequires:  pkgconfig(freetype2)
+BuildRequires:  pkgconfig(gio-2.0)
+BuildRequires:  pkgconfig(glesv2)
+BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(gobject-2.0)
+BuildRequires:  pkgconfig(harfbuzz)
+BuildRequires:  pkgconfig(libinput)
+BuildRequires:  pkgconfig(librsvg-2.0)
+BuildRequires:  pkgconfig(libwebp)
+BuildRequires:  pkgconfig(nlohmann_json)
+BuildRequires:  pkgconfig(pango)
+BuildRequires:  pkgconfig(pangocairo)
+BuildRequires:  pkgconfig(pangoft2)
+BuildRequires:  pkgconfig(stb)
+BuildRequires:  pkgconfig(tomlplusplus)
 BuildRequires:  pkgconfig(wayland-client)
 BuildRequires:  pkgconfig(wayland-egl)
 BuildRequires:  pkgconfig(wayland-protocols)
 BuildRequires:  pkgconfig(wayland-server)
-BuildRequires:  pkgconfig(epoxy)
-BuildRequires:  pkgconfig(egl)
-BuildRequires:  pkgconfig(glesv2)
-BuildRequires:  pkgconfig(freetype2)
-BuildRequires:  pkgconfig(fontconfig)
-BuildRequires:  pkgconfig(cairo)
-BuildRequires:  pkgconfig(cairo-ft)
-BuildRequires:  pkgconfig(pango)
-BuildRequires:  pkgconfig(pangocairo)
-BuildRequires:  pkgconfig(pangoft2)
-BuildRequires:  pkgconfig(harfbuzz)
 BuildRequires:  pkgconfig(xkbcommon)
-BuildRequires:  pkgconfig(glib-2.0)
-BuildRequires:  pkgconfig(gobject-2.0)
-BuildRequires:  pkgconfig(gio-2.0)
-BuildRequires:  pkgconfig(libinput)
-BuildRequires:  pkgconfig(tomlplusplus)
-BuildRequires:  pkgconfig(nlohmann_json)
-BuildRequires:  pkgconfig(stb)
-BuildRequires:  pkgconfig(libwebp)
-BuildRequires:  pkgconfig(librsvg-2.0)
-
+Requires:       dbus-1
 # Runtime deps
 Requires:       greetd
-Requires:       dbus-1
+ExclusiveArch:  x86_64 aarch64
 
 %description
 Noctalia Greeter is the screen you see before your desktop session starts.
@@ -66,7 +63,6 @@ the shell settings.
 %meson_install
 
 %files
-%defattr(-,root,root)
 %license LICENSE
 %doc README.md
 %{_bindir}/noctalia-greeter
@@ -76,7 +72,7 @@ the shell settings.
 %{_bindir}/noctalia-greeter-print-greetd-config
 %{_datadir}/noctalia-greeter
 %{_datadir}/polkit-1/actions/org.noctalia.greeter.apply-appearance.policy
-%dir /usr/lib/tmpfiles.d
-/usr/lib/tmpfiles.d/noctalia-greeter.conf
+%dir %{_prefix}/lib/tmpfiles.d
+%{_prefix}/lib/tmpfiles.d/noctalia-greeter.conf
 
 %changelog

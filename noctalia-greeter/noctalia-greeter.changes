@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Sat Aug 23 2026 Ackerman-00 <quietcraft@gmail.com>
+
+- 1.2.1
+- Add rpmlintrc documenting upstream script shebangs and intentional polkit policy
+-------------------------------------------------------------------
 Fri Aug 07 00:50:34 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Update to upstream version 1.2.1

@@ -1,0 +1,8 @@
+# desktop-file-validate passes the shipped file (verified 2026-08-23,
+# rc=0 with desktop-file-utils on Tumbleweed); rpmlint's built-in parser
+# disagrees - false positive.
+addFilter("rootapp.*: E: invalid-desktopfile")
+# Prebuilt Electron tree ships duplicate resources; hardlinking upstream
+# files would alter the vendored payload. Accepted waste, tracked here.
+addFilter("rootapp.*: E: files-duplicated-waste")
+addFilter("rootapp.*: E: statically-linked-binary /opt/rootapp")

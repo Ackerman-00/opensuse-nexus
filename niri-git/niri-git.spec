@@ -2,7 +2,6 @@
 %global commit          dd75865f547f0eac0e9b6c4d86d2cd00c0744252
 %global shortcommit     dd75865
 %global gitdate         20260821184624
-
 Name:           niri-git
 Version:        26.04+git%{gitdate}.%{shortcommit}
 Release:        0
@@ -10,17 +9,14 @@ Summary:        A scrollable-tiling Wayland compositor (Nexus Optimized)
 License:        GPL-3.0-or-later
 Group:          System/GUI/Other
 URL:            https://github.com/niri-wm/niri
-
 # Generated dynamically by GitHub Actions
 Source0:        niri-%{shortcommit}.tar.gz
 Source1:        vendor.tar.xz
 Source2:        cargo_config
-
-ExclusiveArch:  x86_64 aarch64
-
 BuildRequires:  cargo-packaging
 BuildRequires:  clang
 BuildRequires:  gcc-c++
+BuildRequires:  pkgconfig
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  pkgconfig(cairo-gobject)
 BuildRequires:  pkgconfig(dbus-1)
@@ -29,6 +25,7 @@ BuildRequires:  pkgconfig(gbm)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(libdisplay-info)
 BuildRequires:  pkgconfig(libinput)
+BuildRequires:  pkgconfig(libpipewire-0.3)
 BuildRequires:  pkgconfig(libseat)
 BuildRequires:  pkgconfig(libudev)
 BuildRequires:  pkgconfig(pango)
@@ -38,22 +35,17 @@ BuildRequires:  pkgconfig(systemd)
 BuildRequires:  pkgconfig(wayland-client)
 BuildRequires:  pkgconfig(wayland-server)
 BuildRequires:  pkgconfig(xkbcommon)
-BuildRequires:  pkgconfig(libpipewire-0.3)
-
-Requires:       xwayland-satellite-git
 Requires:       Mesa-dri
 Requires:       Mesa-libEGL1
-Requires:       libwayland-server0
-
 Requires:       xdg-desktop-portal
-
-Recommends:     xdg-desktop-portal-gtk
-Recommends:     xdg-desktop-portal-gnome
+Requires:       xwayland-satellite-git
 Recommends:     gnome-keyring
-
+Recommends:     xdg-desktop-portal-gnome
+Recommends:     xdg-desktop-portal-gtk
+Conflicts:      niri
 Provides:       niri = %{version}
 Provides:       wayland-compositor
-Conflicts:      niri
+ExclusiveArch:  x86_64 aarch64
 
 %description
 A scrollable-tiling Wayland compositor.

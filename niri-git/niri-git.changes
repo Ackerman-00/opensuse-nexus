@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Sat Aug 23 2026 Ackerman-00 <quietcraft@gmail.com>
+
+- 26.04+git20260821184624.dd75865
+- Drop explicit libwayland-server0 Requires; soname autodeps cover it (rpmlint explicit-lib-dependency)
+-------------------------------------------------------------------
 Sat Aug 22 01:17:21 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Nightly sync with upstream main branch (Commit: dd75865)
