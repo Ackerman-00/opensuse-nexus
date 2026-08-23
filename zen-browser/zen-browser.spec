@@ -8,21 +8,20 @@ Source0:        %{url}/releases/download/%{version}/zen.linux-x86_64.tar.xz
 Source1:        zen-browser.sh
 Source2:        zen-browser.desktop
 Source3:        policies.json
-ExclusiveArch:  x86_64
-
+BuildRequires:  chrpath
 BuildRequires:  coreutils
 BuildRequires:  desktop-file-utils
-BuildRequires:  hicolor-icon-theme
+BuildRequires:  execstack
 BuildRequires:  fdupes
-BuildRequires:  mozilla-nspr
-BuildRequires:  mozilla-nss-certs
+BuildRequires:  hicolor-icon-theme
 BuildRequires:  hunspell
 BuildRequires:  hyphen
-BuildRequires:  chrpath
-BuildRequires:  execstack
-Requires:       mozilla-nss-certs
+BuildRequires:  mozilla-nspr
+BuildRequires:  mozilla-nss-certs
 Requires:       hunspell
 Requires:       hyphen
+Requires:       mozilla-nss-certs
+ExclusiveArch:  x86_64
 
 %description
 Zen Browser is a free, open-source web browser based on Mozilla Firefox.It emphasizes privacy, customization, and a modern, distraction-free interface.
@@ -60,8 +59,8 @@ done
 install -d %{buildroot}%{_libdir}/zen-browser/distribution
 install -m644 %{_sourcedir}/policies.json %{buildroot}%{_libdir}/zen-browser/distribution/policies.json
 
-ln -sf /usr/share/hunspell %{buildroot}%{_libdir}/zen-browser/dictionaries
-ln -sf /usr/share/hyphen %{buildroot}%{_libdir}/zen-browser/hyphenation
+ln -sf %{_datadir}/hunspell %{buildroot}%{_libdir}/zen-browser/dictionaries
+ln -sf %{_datadir}/hyphen %{buildroot}%{_libdir}/zen-browser/hyphenation
 
 # zen-browser bundles its own NSS/NSPr stack; libxul.so references the
 # NSS_3.126 versioned symbol which the system mozilla-nss does not provide,

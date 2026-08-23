@@ -31,7 +31,6 @@ Patch0:         fix-cpp-check.patch
 Patch1:         lp64.patch
 BuildRequires:  c++_compiler
 BuildArch:      noarch
-
 # to create version list for changelog
 # for i  in stb_*.h ; do sed -n  '1 s,^// \([^-]*\) - \([^-]*\).*,\1: \2,p' "$i"; done
 
@@ -97,20 +96,20 @@ sed \
 %{SOURCE1} > stb.pc
 
 %install
-mkdir -p %buildroot%_includedir/stb
-install -m0644 *.h %buildroot%_includedir/stb
+mkdir -p %{buildroot}%{_includedir}/stb
+install -m0644 *.h %{buildroot}%{_includedir}/stb
 # stb_vorbis.c is a header file..
-cp stb_vorbis.c %buildroot%_includedir/stb/stb_vorbis.h
+cp stb_vorbis.c %{buildroot}%{_includedir}/stb/stb_vorbis.h
 
 install -Dm0644 stb.pc %{buildroot}%{_datadir}/pkgconfig/stb.pc
 
 %check
 cd tests
-make && ./a.out
+%make_build && ./a.out
 
 %files devel
 %doc README.md docs
-%_includedir/stb
-%_datadir/pkgconfig/stb.pc
+%{_includedir}/stb
+%{_datadir}/pkgconfig/stb.pc
 
 %changelog

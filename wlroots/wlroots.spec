@@ -2,16 +2,13 @@
 %global sover      0_20
 %global patch_ver  2
 %global libname    libwlroots-%{sover}
-
 %bcond_without  drm_backend
 %bcond_without  libinput_backend
 %bcond_without  x11_backend
 %bcond_without  xwayland
 %bcond_without  xcb_errors
-
 Name:           wlroots
 Version:        %{ver_suffix}.%{patch_ver}
-ExclusiveArch:  x86_64 aarch64
 Release:        0
 Summary:        Modular Wayland compositor library
 License:        MIT
@@ -20,7 +17,6 @@ URL:            https://gitlab.freedesktop.org/wlroots/wlroots
 Source0:        https://gitlab.freedesktop.org/wlroots/wlroots/-/releases/%{version}/downloads/wlroots-%{version}.tar.gz
 Source1:        https://gitlab.freedesktop.org/wlroots/wlroots/-/releases/%{version}/downloads/wlroots-%{version}.tar.gz.sig
 Source2:        https://emersion.fr/.well-known/openpgpkey/hu/dj3498u4hyyarh35rkjfnghbjxug6b19#/%{name}.keyring
-
 BuildRequires:  glslang-devel
 BuildRequires:  meson >= 0.59.0
 BuildRequires:  pkgconfig
@@ -35,9 +31,6 @@ BuildRequires:  pkgconfig(libavutil)
 BuildRequires:  pkgconfig(libdisplay-info)
 BuildRequires:  pkgconfig(libdrm) >= 2.4.129
 BuildRequires:  pkgconfig(libliftoff)
-%if %{with libinput_backend}
-BuildRequires:  pkgconfig(libinput) >= 1.14.0
-%endif
 BuildRequires:  pkgconfig(libpng)
 BuildRequires:  pkgconfig(libseat)
 BuildRequires:  pkgconfig(libudev)
@@ -48,6 +41,10 @@ BuildRequires:  pkgconfig(wayland-egl)
 BuildRequires:  pkgconfig(wayland-protocols) >= 1.25
 BuildRequires:  pkgconfig(wayland-server) >= 1.21
 BuildRequires:  pkgconfig(xkbcommon)
+ExclusiveArch:  x86_64 aarch64
+%if %{with libinput_backend}
+BuildRequires:  pkgconfig(libinput) >= 1.14.0
+%endif
 %if %{with x11_backend} || %{with xwayland}
 BuildRequires:  xorg-x11-server-wayland
 BuildRequires:  pkgconfig(x11-xcb)

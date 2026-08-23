@@ -1,9 +1,7 @@
 %global debug_package %{nil}
-
 # Prevent RPM from trying to auto-generate dependencies from the bundled Electron libraries
 %global __requires_exclude_from ^/opt/OpenCode/.*$
 %global __provides_exclude_from ^/opt/OpenCode/.*$
-
 Name:           opencode-desktop
 Version:        1.18.21
 Release:        0
@@ -13,35 +11,32 @@ Group:          Development/Tools/Other
 URL:            https://opencode.ai
 Source0:        https://github.com/anomalyco/opencode/releases/download/v%{version}/opencode-desktop-linux-amd64.deb
 Source1:        opencode-desktop-rpmlintrc
-
-ExclusiveArch:  x86_64
 BuildRequires:  python3
-
-Requires:       libgtk-3.so.0()(64bit)
-Requires:       libnotify.so.4()(64bit)
-Requires:       libnss3.so()(64bit)
+Requires:       at-spi2-core
+Requires:       libXcomposite1
+Requires:       libXdamage1
 Requires:       libXss.so.1()(64bit)
 Requires:       libXtst6
-Requires:       xdg-utils
-Requires:       at-spi2-core
-Requires:       libuuid1
 Requires:       libasound.so.2()(64bit)
 Requires:       libcups.so.2()(64bit)
 Requires:       libgbm.so.1()(64bit)
-Requires:       libXcomposite1
-Requires:       libXdamage1
-Requires:       libxkbcommon0
+Requires:       libgtk-3.so.0()(64bit)
+Requires:       libnotify.so.4()(64bit)
+Requires:       libnss3.so()(64bit)
 Requires:       libsecret-1-0
+Requires:       libuuid1
+Requires:       libxkbcommon0
 Requires:       ripgrep
-
+Requires:       xdg-utils
 Provides:       opencode = %{version}-%{release}
 Obsoletes:      opencode < %{version}
+ExclusiveArch:  x86_64
 
 %description
 OpenCode is an open source agent that helps you write and run code with any AI model.
 
 %prep
-%setup -c -T
+%setup -q -c -T
 python3 - <<'PYEOF'
 import io, sys, tarfile
 
@@ -61,11 +56,10 @@ with open(src, "rb") as f:
         if name == "data.tar.xz/" or name == "data.tar.xz":
             tarfile.open(fileobj=io.BytesIO(payload), mode="r:xz").extractall(dst)
             sys.exit(0)
-    sys.exit("data.tar.xz not found in %s" % src)
+    sys.exit("data.tar.xz not found in %{s}" % src)
 PYEOF
 
 %install
-rm -rf %{buildroot}
 
 install -d -m 0755 %{buildroot}/opt/OpenCode
 cp -a opt/OpenCode/* %{buildroot}/opt/OpenCode/
@@ -97,13 +91,12 @@ exec /opt/OpenCode/ai.opencode.desktop $flags "$@"
 EOF
 chmod 0755 %{buildroot}%{_bindir}/opencode-desktop
 
-sed -i 's|^Exec=.*|Exec=%{_bindir}/opencode-desktop %U|' \
+sed -i 's|^Exec=.*|Exec=%{_bindir}/opencode-desktop %{U}|' \
     %{buildroot}%{_datadir}/applications/opencode-desktop.desktop
-sed -i 's|^Exec=.*|Exec=%{_bindir}/opencode-desktop %U|' \
+sed -i 's|^Exec=.*|Exec=%{_bindir}/opencode-desktop %{U}|' \
     %{buildroot}%{_datadir}/applications/ai.opencode.desktop.desktop
 
 %files
-%defattr(-,root,root)
 %{_bindir}/opencode-desktop
 %{_datadir}/applications/opencode-desktop.desktop
 %{_datadir}/applications/ai.opencode.desktop.desktop

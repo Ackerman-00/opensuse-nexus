@@ -1,11 +1,8 @@
 %global appid app.fluxer.Fluxer
-
 %global debug_package %{nil}
-
 # Prevent RPM from trying to auto-generate dependencies from the bundled Electron libraries
-%global __requires_exclude_from ^/usr/lib64/%{name}/.*$
-%global __provides_exclude_from ^/usr/lib64/%{name}/.*$
-
+%global __requires_exclude_from ^%{_libdir}/%{name}/.*$
+%global __provides_exclude_from ^%{_libdir}/%{name}/.*$
 Name:           fluxer
 Version:        2026.821.183746
 Release:        0
@@ -15,12 +12,8 @@ Group:          Productivity/Networking/Talk/Clients
 URL:            https://fluxer.app
 Source0:        fluxer.rpm
 Source1:        fluxer-rpmlintrc
-
-ExclusiveArch:  x86_64
-
 BuildRequires:  cpio
 BuildRequires:  hicolor-icon-theme
-
 # Runtime dependencies for the bundled Electron/Chromium runtime
 Requires:       at-spi2-core
 Requires:       hicolor-icon-theme
@@ -56,6 +49,7 @@ Requires:       libuuid1
 Requires:       libxcb.so.1()(64bit)
 Requires:       libxkbcommon.so.0()(64bit)
 Requires:       xdg-utils
+ExclusiveArch:  x86_64
 
 %description
 Fluxer is a free and open source instant messaging and VoIP platform built for
@@ -69,7 +63,6 @@ rpm2cpio %{SOURCE0} | cpio -idmv
 # No compilation required
 
 %install
-rm -rf %{buildroot}
 
 # 1. Install main app
 install -d -m 0755 %{buildroot}%{_libdir}/%{name}
@@ -88,7 +81,7 @@ install -Dm0644 usr/share/applications/fluxer.desktop \
     %{buildroot}%{_datadir}/applications/%{appid}.desktop
 
 # Fix Exec= and Icon= for our relocation
-sed -i 's|^Exec=.*|Exec=%{_bindir}/%{name} %U|' \
+sed -i 's|^Exec=.*|Exec=%{_bindir}/%{name} %{U}|' \
     %{buildroot}%{_datadir}/applications/%{appid}.desktop
 sed -i 's|^Icon=.*|Icon=%{appid}|' \
     %{buildroot}%{_datadir}/applications/%{appid}.desktop
@@ -101,7 +94,6 @@ for iconpath in usr/share/icons/hicolor/*/apps/fluxer.png; do
 done
 
 %files
-%defattr(-,root,root)
 %license opt/Fluxer/LICENSE.electron.txt
 %doc opt/Fluxer/LICENSES.chromium.html
 %{_bindir}/%{name}

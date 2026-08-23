@@ -2,26 +2,22 @@
 %global commit          3bc915f09dd62bb2651a715114f9d140344bc6c1
 %global shortcommit     3bc915f
 %global gitdate         20260808203058
-
 Name:           xwayland-satellite-git
 Version:        0.8.2+git%{gitdate}.%{shortcommit}
 Release:        0
 Summary:        Rootless Xwayland integration for Wayland compositors (Nexus Optimized)
-
 License:        MPL-2.0
 Group:          System/GUI/Other
 URL:            https://github.com/Supreeeme/xwayland-satellite
 Source0:        xwayland-satellite-%{shortcommit}.tar.gz
 Source1:        vendor.tar.xz
 Source2:        cargo_config
-
-ExclusiveArch:  x86_64 aarch64
-
 BuildRequires:  cargo-packaging
 BuildRequires:  clang
 BuildRequires:  clang-devel
-BuildRequires:  llvm-devel
 BuildRequires:  gcc-c++
+BuildRequires:  llvm-devel
+BuildRequires:  pkgconfig
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  pkgconfig(fontconfig)
 BuildRequires:  pkgconfig(wayland-client)
@@ -29,17 +25,16 @@ BuildRequires:  pkgconfig(wayland-cursor)
 BuildRequires:  pkgconfig(wayland-server)
 BuildRequires:  pkgconfig(xcb)
 BuildRequires:  pkgconfig(xcb-cursor)
-
+Requires:       google-opensans-fonts
 # OpenSUSE specific naming architecture
 Requires:       xwayland
-Requires:       google-opensans-fonts
-
 Conflicts:      xwayland-satellite
 Provides:       xwayland-satellite = %{version}
+ExclusiveArch:  x86_64 aarch64
 
 %description
 xwayland-satellite grants rootless Xwayland integration to any Wayland
-compositor implementing xdg_wm_base and viewporter. This package tracks 
+compositor implementing xdg_wm_base and viewporter. This package tracks
 the bleeding-edge master branch.
 
 %prep
@@ -51,7 +46,7 @@ mkdir -p .cargo
 cp %{SOURCE2} .cargo/config
 
 # Dynamically fix the executable path in the systemd unit using system path macros
-sed -i 's|/usr/local/bin|%{_bindir}|g' resources/xwayland-satellite.service
+sed -i 's|%{_prefix}/local/bin|%{_bindir}|g' resources/xwayland-satellite.service
 
 # Remove vendored decoration font if it exists in the current git tree to save weight
 rm -f OpenSans-Regular.ttf
@@ -73,10 +68,10 @@ install -Dpm0644 resources/xwayland-satellite.service -t %{buildroot}%{_userunit
 %systemd_user_post xwayland-satellite.service
 
 %preun
-%systemd_user_preun xwayland-satellite.service
+%{systemd_user_preun} xwayland-satellite.service
 
 %postun
-%systemd_user_postun xwayland-satellite.service
+%{systemd_user_postun} xwayland-satellite.service
 
 %files
 %license LICENSE

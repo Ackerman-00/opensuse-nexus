@@ -1,27 +1,25 @@
 %global version_underscore 0_5
 %global version_dot 0.5
-
 Name:           scenefx
 Version:        0.5
 Release:        0
-ExclusiveArch:  x86_64 aarch64
 Summary:        Drop-in replacement for wlroots scene API with eye-candy effects
 License:        MIT
 URL:            https://github.com/wlrfx/scenefx
 Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
-
-BuildRequires:  meson >= 1.3
 BuildRequires:  gcc-c++
+BuildRequires:  meson >= 1.3
 BuildRequires:  pkgconfig
 BuildRequires:  pkgconfig(egl)
 BuildRequires:  pkgconfig(gbm)
 BuildRequires:  pkgconfig(glesv2)
 BuildRequires:  pkgconfig(libdrm) >= 2.4.129
 BuildRequires:  pkgconfig(pixman-1) >= 0.43.0
-BuildRequires:  pkgconfig(xkbcommon) >= 1.8.0
-BuildRequires:  pkgconfig(wlroots-0.20) >= 0.20.0
-BuildRequires:  pkgconfig(wayland-server) >= 1.24.0
 BuildRequires:  pkgconfig(wayland-protocols)
+BuildRequires:  pkgconfig(wayland-server) >= 1.24.0
+BuildRequires:  pkgconfig(wlroots-0.20) >= 0.20.0
+BuildRequires:  pkgconfig(xkbcommon) >= 1.8.0
+ExclusiveArch:  x86_64 aarch64
 
 %description
 SceneFX is a drop-in replacement for the wlroots scene API that
@@ -57,7 +55,7 @@ for blur, shadows, and rounded corners.
 %install
 %meson_install
 
-%ldconfig_scriptlets -n libscenefx-%{version_underscore}
+%{ldconfig_scriptlets} -n libscenefx-%{version_underscore}
 
 %files -n libscenefx-%{version_underscore}
 %license LICENSE

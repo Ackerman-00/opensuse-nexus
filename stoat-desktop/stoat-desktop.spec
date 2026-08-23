@@ -1,50 +1,45 @@
 # Disable debuginfo extraction since we are repackaging pre-compiled binaries
 %global debug_package %{nil}
-
 # Prevent RPM from trying to auto-generate dependencies from the bundled Electron libraries
 %global __requires_exclude_from ^/opt/Stoat/.*$
 %global __provides_exclude_from ^/opt/Stoat/.*$
-
 Name:           stoat-desktop
 Version:        1.5.3
 Release:        0
 Summary:        Open source, user-first chat platform desktop client
 License:        AGPL-3.0-only AND MIT AND BSD-2-Clause
-Group:          Productivity/Networking/InstantMessaging
+# FIXME: use correct group or remove it, see "https://en.opensuse.org/openSUSE:Package_group_guidelines"
+Group:          Productivity/Networking/Talk/Clients
 URL:            https://github.com/stoatchat/for-desktop
 Source0:        %{url}/releases/download/v%{version}/Stoat-linux-x64-%{version}.zip
 Source1:        stoat-desktop.desktop
 Source2:        stoat.png
 Source3:        chat.stoat.StoatDesktop.metainfo.xml
-
-ExclusiveArch:  x86_64
-
-BuildRequires:  unzip
 BuildRequires:  desktop-file-utils
 BuildRequires:  hicolor-icon-theme
-
-Requires:       gtk3
-Requires:       mozilla-nss
+BuildRequires:  unzip
 Requires:       at-spi2-core
-Requires:       libcups2
 Requires:       dbus-1
-Requires:       libsystemd0
+Requires:       gtk3
 Requires:       libX11-6
-Requires:       libxcb1
 Requires:       libXcomposite1
 Requires:       libXdamage1
 Requires:       libXext6
 Requires:       libXfixes3
 Requires:       libXrandr2
-Requires:       libxkbcommon0
-Requires:       libgbm1
 Requires:       libasound2
+Requires:       libcups2
+Requires:       libgbm1
 Requires:       libsecret-1-0
+Requires:       libsystemd0
+Requires:       libxcb1
+Requires:       libxkbcommon0
+Requires:       mozilla-nss
 Requires:       xdg-utils
-
-Requires(post):       desktop-file-utils
-Requires(postun):     gtk3-tools
-Requires(posttrans):  gtk3-tools
+Requires(post): desktop-file-utils
+Requires(posttrans): gtk3-tools
+Requires(postun): gtk3-tools
+ExclusiveArch:  x86_64
 
 %description
 Stoat is an open source, user-first chat platform. Send messages, share
@@ -53,14 +48,13 @@ application. Packaged from the upstream pre-built Electron bundle for the
 Nexus repository.
 
 %prep
-%setup -q -c -T -n %{name}-%{version}
+%setup -q -c -T
 unzip -q %{SOURCE0}
 
 %build
 # No compilation required for pre-built binaries
 
 %install
-rm -rf %{buildroot}
 
 # 1. Install the main application folder
 install -d -m 0755 %{buildroot}/opt/Stoat
@@ -88,23 +82,22 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/chat.stoat.StoatDeskt
 
 %post
 # Refresh the desktop database and icon cache
-/usr/bin/update-desktop-database > /dev/null 2>&1 || :
+%{_bindir}/update-desktop-database > /dev/null 2>&1 || :
 /bin/touch --no-create %{_datadir}/icons/hicolor > /dev/null 2>&1 || :
 
 %postun
-/usr/bin/update-desktop-database > /dev/null 2>&1 || :
+%{_bindir}/update-desktop-database > /dev/null 2>&1 || :
 case "$1" in
     0)
         /bin/touch --no-create %{_datadir}/icons/hicolor > /dev/null 2>&1
-        /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor > /dev/null 2>&1 || :
+        %{_bindir}/gtk-update-icon-cache %{_datadir}/icons/hicolor > /dev/null 2>&1 || :
         ;;
 esac
 
 %posttrans
-/usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor > /dev/null 2>&1 || :
+%{_bindir}/gtk-update-icon-cache %{_datadir}/icons/hicolor > /dev/null 2>&1 || :
 
 %files
-%defattr(-,root,root,-)
 %{_bindir}/stoat-desktop
 %{_datadir}/applications/chat.stoat.StoatDesktop.desktop
 %{_datadir}/icons/hicolor/256x256/apps/chat.stoat.StoatDesktop.png

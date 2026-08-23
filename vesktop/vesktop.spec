@@ -1,9 +1,7 @@
 %global debug_package %{nil}
-
 # Prevent RPM from trying to auto-generate dependencies from the bundled Electron libraries
 %global __requires_exclude_from ^/opt/Vesktop/.*$
 %global __provides_exclude_from ^/opt/Vesktop/.*$
-
 Name:           vesktop
 Version:        1.6.7
 Release:        0
@@ -14,14 +12,10 @@ URL:            https://github.com/Vencord/Vesktop
 Source0:        https://github.com/Vencord/Vesktop/releases/download/v1.6.7/vesktop-1.6.7.x86_64.rpm
 # Source1 is the filter file to bypass the "Badness" check
 Source1:        vesktop-rpmlintrc
-
-ExclusiveArch:  x86_64
-
 BuildRequires:  cpio
 BuildRequires:  hicolor-icon-theme
 # Required for desktop file validation
 BuildRequires:  update-desktop-files
-
 # Runtime dependencies for the bundled Electron/Chromium runtime
 Requires:       at-spi2-core
 Requires:       hicolor-icon-theme
@@ -57,10 +51,10 @@ Requires:       libuuid1
 Requires:       libxcb.so.1()(64bit)
 Requires:       libxkbcommon.so.0()(64bit)
 Requires:       xdg-utils
-
 Provides:       vencorddesktop = %{version}-%{release}
 Provides:       vesktop = %{version}-%{release}
 Obsoletes:      vencorddesktop < %{version}
+ExclusiveArch:  x86_64
 
 %description
 Vesktop is a custom Discord client designed to enhance your experience.
@@ -74,7 +68,6 @@ rpm2cpio %{SOURCE0} | cpio -idmv
 # No compilation required
 
 %install
-rm -rf %{buildroot}
 
 # 1. Install main app
 install -d -m 0755 %{buildroot}/opt/Vesktop
@@ -100,7 +93,6 @@ chmod 0755 %{buildroot}%{_bindir}/vesktop
 %suse_update_desktop_file vesktop
 
 %files
-%defattr(-,root,root)
 %{_bindir}/vesktop
 %{_datadir}/applications/vesktop.desktop
 %{_datadir}/icons/hicolor/*/apps/*.*

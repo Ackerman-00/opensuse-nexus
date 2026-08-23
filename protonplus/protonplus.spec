@@ -1,5 +1,4 @@
 %define         appid com.vysp3r.ProtonPlus
-
 Name:           protonplus
 Version:        0.6.4
 Release:        0
@@ -8,7 +7,6 @@ License:        GPL-3.0-only
 Group:          System/GUI/Other
 URL:            https://github.com/vysp3r/ProtonPlus
 Source0:        %{url}/archive/refs/tags/v%{version}.tar.gz
-
 BuildRequires:  appstream-glib
 BuildRequires:  cmake
 BuildRequires:  desktop-file-utils
@@ -18,6 +16,7 @@ BuildRequires:  git-core
 BuildRequires:  meson >= 1.0.0
 BuildRequires:  ninja
 BuildRequires:  pkgconf
+BuildRequires:  pkgconfig
 BuildRequires:  vala
 BuildRequires:  pkgconfig(appstream)
 BuildRequires:  pkgconfig(cairo)
@@ -27,9 +26,9 @@ BuildRequires:  pkgconfig(gtk4)
 BuildRequires:  pkgconfig(json-glib-1.0)
 BuildRequires:  pkgconfig(libadwaita-1) >= 1.6.0
 BuildRequires:  pkgconfig(libarchive)
+BuildRequires:  pkgconfig(libnotify)
 BuildRequires:  pkgconfig(libsoup-3.0)
 BuildRequires:  pkgconfig(sdl3)
-BuildRequires:  pkgconfig(libnotify)
 
 %description
 ProtonPlus is a Proton version manager for installing and managing Proton
@@ -42,7 +41,7 @@ uses GTK4.
 %autosetup -n ProtonPlus-%{version}
 
 %build
-%meson --prefix=/usr
+%meson --prefix=%{_prefix}
 %meson_build
 
 %install
