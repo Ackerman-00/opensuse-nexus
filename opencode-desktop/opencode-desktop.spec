@@ -91,9 +91,9 @@ exec /opt/OpenCode/ai.opencode.desktop $flags "$@"
 EOF
 chmod 0755 %{buildroot}%{_bindir}/opencode-desktop
 
-sed -i 's|^Exec=.*|Exec=%{_bindir}/opencode-desktop %{U}|' \
+sed -i 's|^Exec=.*|Exec=%{_bindir}/opencode-desktop %U|' \
     %{buildroot}%{_datadir}/applications/opencode-desktop.desktop
-sed -i 's|^Exec=.*|Exec=%{_bindir}/opencode-desktop %{U}|' \
+sed -i 's|^Exec=.*|Exec=%{_bindir}/opencode-desktop %U|' \
     %{buildroot}%{_datadir}/applications/ai.opencode.desktop.desktop
 
 %files

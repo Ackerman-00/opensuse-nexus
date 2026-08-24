@@ -53,7 +53,7 @@ install -dm755 %{buildroot}%{_datadir}/applications
 cat > %{buildroot}%{_datadir}/applications/%{app_id}.desktop << EOF
 [Desktop Entry]
 Name=Obsidian
-Exec=%{_bindir}/obsidian %{U}
+Exec=%{_bindir}/obsidian %U
 Terminal=false
 Type=Application
 Icon=%{app_id}

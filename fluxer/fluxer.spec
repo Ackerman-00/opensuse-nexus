@@ -81,7 +81,7 @@ install -Dm0644 usr/share/applications/fluxer.desktop \
     %{buildroot}%{_datadir}/applications/%{appid}.desktop
 
 # Fix Exec= and Icon= for our relocation
-sed -i 's|^Exec=.*|Exec=%{_bindir}/%{name} %{U}|' \
+sed -i 's|^Exec=.*|Exec=%{_bindir}/%{name} %U|' \
     %{buildroot}%{_datadir}/applications/%{appid}.desktop
 sed -i 's|^Icon=.*|Icon=%{appid}|' \
     %{buildroot}%{_datadir}/applications/%{appid}.desktop

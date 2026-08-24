@@ -82,7 +82,7 @@ cat > %{buildroot}%{_datadir}/applications/rootapp.desktop <<DESKTOP_EOF
 Type=Application
 Name=Root
 Comment=Root App is a new Discord alternative, designed for gaming communities and large online groups
-Exec=rootapp %{U}
+Exec=rootapp %U
 Icon=rootapp
 Terminal=false
 StartupWMClass=Root

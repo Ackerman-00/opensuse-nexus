@@ -68,10 +68,10 @@ install -Dpm0644 resources/xwayland-satellite.service -t %{buildroot}%{_userunit
 %systemd_user_post xwayland-satellite.service
 
 %preun
-%{systemd_user_preun} xwayland-satellite.service
+%systemd_user_preun xwayland-satellite.service
 
 %postun
-%{systemd_user_postun} xwayland-satellite.service
+%systemd_user_postun xwayland-satellite.service
 
 %files
 %license LICENSE
