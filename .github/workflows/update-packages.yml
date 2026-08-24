@@ -138,13 +138,25 @@ jobs:
           OBS_PASS: ${{ secrets.OBS_PASS }}
         run: |
           echo "==> Phase 3: Checking OBS Build Status..."
-          RESULT=$(curl -s -S -u "$OBS_USER:$OBS_PASS" -G "https://api.opensuse.org/build/home:ackerman/_result" \
-            --data-urlencode "view=status" \
-            --data-urlencode "code=failed" \
-            --data-urlencode "code=broken" \
-            --data-urlencode "code=unresolvable")
+          # The OBS API occasionally returns transient 500s ("Web application
+          # could not be started"). Retry before giving up - a false failure
+          # here aborts the job and skips the sync phase below.
+          RESULT=""
+          for attempt in 1 2 3 4 5; do
+            RESULT=$(curl -s -S -u "$OBS_USER:$OBS_PASS" -G "https://api.opensuse.org/build/home:ackerman/_result" \
+              --data-urlencode "view=status" \
+              --data-urlencode "code=failed" \
+              --data-urlencode "code=broken" \
+              --data-urlencode "code=unresolvable")
+            if ! echo "$RESULT" | grep -q '<html'; then
+              break
+            fi
+            echo "OBS API attempt $attempt returned HTML (transient error); retrying in 30s..."
+            echo "$RESULT" | grep -oP '<title>[^<]+</title>' | head -1 || true
+            sleep 30
+          done
           if echo "$RESULT" | grep -q '<html'; then
-            echo "ERROR: OBS API returned non-XML response (auth failure?)"
+            echo "ERROR: OBS API returned non-XML response after 5 attempts (auth failure or outage?)"
             echo "$RESULT" | grep -oP '<title>[^<]+</title>' | head -1
             exit 1
           fi
@@ -229,6 +241,83 @@ jobs:
           }
 
           PKGS_TO_SYNC=$(collect_pkgs)
+
+          # Reconcile repo-vs-OBS drift: if a previous run committed a version
+          # bump but its OBS sync failed (e.g. transient API outage), the repo
+          # stays ahead of OBS forever. Compare md5 of every git-tracked file
+          # (spec/.changes/_service/patches...) against OBS and re-sync any
+          # package that differs. Untracked generated artifacts (tarballs,
+          # vendor.tar.xz) are intentionally ignored - they are produced by
+          # update.sh / source services and differ harmlessly.
+          echo "==> Checking repo-vs-OBS drift for tracked files..."
+          expand_spec_macro() {
+            # expand_spec_macro <spec> <text-with-%macros>  (one level per call)
+            local spec="$1" val="$2" macro mval out
+            macro=$(printf '%s' "$val" | grep -oP '%\{[a-zA-Z_][a-zA-Z0-9_]*\}|%[a-zA-Z_][a-zA-Z0-9_]*' | head -1 | tr -d '%{}') || true
+            [ -n "$macro" ] || { printf '%s' "$val"; return; }
+            mval=$(grep -oP "^%(?:global|define)\s+${macro}\s+\K\S+" "$spec" | head -1)
+            if [ -z "$mval" ] && [ "${macro,,}" = "version" ]; then
+              mval=$(grep -oP '^Version:[ \t]*\K\S+' "$spec" | head -1)
+            fi
+            if [ -n "$mval" ]; then
+              out=$(printf '%s' "$val" | sed "s/%{${macro}}/${mval}/g; s/%${macro}/${mval}/g")
+              printf '%s' "$out"
+            else
+              printf '%s' ""
+            fi
+          }
+          for pkg_dir in */; do
+            pkg="${pkg_dir%/}"
+            ls "$pkg_dir"*.spec >/dev/null 2>&1 || continue
+            spec_file=$(ls "$pkg_dir"*.spec | head -1)
+            OBS_XML=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg" || true)
+            if echo "$OBS_XML" | grep -q 'unknown_package'; then
+              PKGS_TO_SYNC="$PKGS_TO_SYNC $pkg"
+              continue
+            fi
+            DRIFT=0
+            while IFS= read -r filepath; do
+              filename=$(basename "$filepath")
+              [ "$filename" = "update.sh" ] && continue
+              LOCAL_MD5=$(md5sum "$filepath" | cut -d' ' -f1)
+              REMOTE_MD5=$(echo "$OBS_XML" | grep -oP "(?<=<entry name=\"$filename\" md5=\")[0-9a-f]{32}" | head -1 || true)
+              if [ "$LOCAL_MD5" != "$REMOTE_MD5" ]; then
+                echo " -> Drift on $pkg/$filename (local=$LOCAL_MD5 obs=${REMOTE_MD5:-missing})"
+                DRIFT=1
+                break
+              fi
+            done < <(git ls-files "$pkg")
+            if [ "$DRIFT" != "1" ]; then
+              continue
+            fi
+            # Safety: packages without _service get their sources uploaded from
+            # the local tree. Only re-sync when every Source artifact is present
+            # locally, otherwise the sync would DELETE the remote sources and
+            # break the build. Skip such packages; a scheduled updater pass will
+            # regenerate the artifacts and sync them properly.
+            if [ ! -f "$pkg/_service" ]; then
+              ART_OK=1
+              while IFS= read -r srcline; do
+                srcval=$(printf '%s' "$srcline" | sed 's/^[[:space:]]*Source[0-9]*:[[:space:]]*//')
+                for _ in 1 2 3 4; do
+                  expanded=$(expand_spec_macro "$spec_file" "$srcval")
+                  [ -n "$expanded" ] || break
+                  [ "$expanded" = "$srcval" ] && break
+                  srcval="$expanded"
+                done
+                base=$(basename "$srcval")
+                if [ -n "$base" ] && [ ! -f "$pkg/$base" ]; then
+                  echo " -> $pkg: source artifact '$base' not in local tree; deferring drift-sync"
+                  ART_OK=0
+                  break
+                fi
+              done < <(grep -E '^[[:space:]]*Source[0-9]*:' "$spec_file")
+              if [ "$ART_OK" != "1" ]; then
+                continue
+              fi
+            fi
+            PKGS_TO_SYNC="$PKGS_TO_SYNC $pkg"
+          done
 
           for pkg in $PKGS_TO_SYNC; do
             if [ -z "$pkg" ] || [ ! -d "$pkg" ]; then

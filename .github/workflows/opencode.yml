@@ -85,6 +85,9 @@ jobs:
           MODEL: opencode/deepseek-v4-flash-free
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OBS_USER: ${{ secrets.OBS_USER }}
+          OBS_PASS: ${{ secrets.OBS_PASS }}
           RUN_ID: ${{ github.run_id }}
           GIT_AUTHOR_NAME: opencode-agent[bot]
           GIT_AUTHOR_EMAIL: 41898282+opencode-agent[bot]@users.noreply.github.com
