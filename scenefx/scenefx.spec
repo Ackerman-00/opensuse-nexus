@@ -55,7 +55,7 @@ for blur, shadows, and rounded corners.
 %install
 %meson_install
 
-%{ldconfig_scriptlets} -n libscenefx-%{version_underscore}
+%ldconfig_scriptlets -n libscenefx-%{version_underscore}
 
 %files -n libscenefx-%{version_underscore}
 %license LICENSE
