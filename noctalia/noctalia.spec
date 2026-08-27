@@ -1,7 +1,7 @@
 # Raw upstream tag version (GitHub archive dir uses this, no v prefix)
-%global tagver 5.0.0-beta.9
+%global tagver 5.0.0-beta.10
 Name:           noctalia
-Version:        5.0.0~beta9
+Version:        5.0.0~beta10
 Release:        0
 Summary:        A sleek and minimal desktop shell thoughtfully crafted for Wayland
 License:        MIT
