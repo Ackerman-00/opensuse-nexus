@@ -1,3 +1,6 @@
+* Sun Aug 30 2026 GitHub Actions <actions@github.com> - 1.21.16b-0
+- Update zen-browser to v1.21.16b
+
 * Thu Aug 20 2026 Ackerman-00 <quietcraft@gmail.com> - 1.21.15b-0
 
 - Fix OBS build: add BuildRequires mozilla-nspr to resolve the
