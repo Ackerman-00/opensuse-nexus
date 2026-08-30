@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Sun Aug 30 20:40:37 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Update to upstream release 0.6.5
+
+-------------------------------------------------------------------
 Sun Aug 16 07:20:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Add explicit BuildRequires pkgconfig(appstream) and
