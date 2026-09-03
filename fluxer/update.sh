@@ -8,7 +8,7 @@ RPM_FILE="fluxer.rpm"
 
 echo "Checking for fluxer updates..."
 
-VERSION=$(curl -sI "$API_URL" | grep -i "^X-Fluxer-Version:" | awk '{print $2}' | tr -d '\r')
+VERSION=$(curl -s -D - -o /dev/null -L "$API_URL" 2>/dev/null | grep -i "^X-Fluxer-Version:" | awk '{print $2}' | tr -d '\r')
 
 if [ -z "$VERSION" ]; then
     echo "Error: Failed to fetch upstream version."

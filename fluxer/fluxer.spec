@@ -4,7 +4,7 @@
 %global __requires_exclude_from ^%{_libdir}/%{name}/.*$
 %global __provides_exclude_from ^%{_libdir}/%{name}/.*$
 Name:           fluxer
-Version:        2026.829.181028
+Version:        2026.903.143755
 Release:        0
 Summary:        Free and open source instant messaging and VoIP platform
 License:        AGPL-3.0-or-later AND BSD
@@ -64,9 +64,19 @@ rpm2cpio %{SOURCE0} | cpio -idmv
 
 %install
 
-# 1. Install main app
+# 1. Install main app — handle both stable (opt/Fluxer) and canary (opt/Fluxer Canary) layouts
 install -d -m 0755 %{buildroot}%{_libdir}/%{name}
-cp -a opt/Fluxer/* %{buildroot}%{_libdir}/%{name}/
+FLUXER_SRC=$(ls -d opt/Fluxer* 2>/dev/null | head -n1)
+if [ -z "$FLUXER_SRC" ]; then echo "No Fluxer source dir found in RPM"; exit 1; fi
+cp -a "$FLUXER_SRC"/* %{buildroot}%{_libdir}/%{name}/
+# Ensure wrapper target exists: stable binary is 'fluxer', canary is 'fluxer-canary'
+if [ ! -x "%{buildroot}%{_libdir}/%{name}/%{name}" ] && [ -x "%{buildroot}%{_libdir}/%{name}/%{name}-canary" ]; then
+    ln -sf %{name}-canary %{buildroot}%{_libdir}/%{name}/%{name}
+fi
+if [ ! -x "%{buildroot}%{_libdir}/%{name}/fluxer" ] && ls %{buildroot}%{_libdir}/%{name}/fluxer* >/dev/null 2>&1; then
+    FIRST_BIN=$(ls %{buildroot}%{_libdir}/%{name}/fluxer* | head -n1)
+    ln -sf $(basename "$FIRST_BIN") %{buildroot}%{_libdir}/%{name}/fluxer 2>/dev/null || true
+fi
 
 # 2. Launcher wrapper
 install -d -m 0755 %{buildroot}%{_bindir}
@@ -76,8 +86,10 @@ exec %{_libdir}/%{name}/%{name} "$@"
 EOF
 chmod 0755 %{buildroot}%{_bindir}/%{name}
 
-# 3. Desktop file
-install -Dm0644 usr/share/applications/fluxer.desktop \
+# 3. Desktop file — handle fluxer.desktop or fluxer-canary.desktop
+DESKTOP_SRC=$(ls usr/share/applications/fluxer*.desktop 2>/dev/null | head -n1)
+if [ -z "$DESKTOP_SRC" ]; then echo "No desktop file found"; exit 1; fi
+install -Dm0644 "$DESKTOP_SRC" \
     %{buildroot}%{_datadir}/applications/%{appid}.desktop
 
 # Fix Exec= and Icon= for our relocation
@@ -86,17 +98,20 @@ sed -i 's|^Exec=.*|Exec=%{_bindir}/%{name} %U|' \
 sed -i 's|^Icon=.*|Icon=%{appid}|' \
     %{buildroot}%{_datadir}/applications/%{appid}.desktop
 
-# 4. Icons
-for iconpath in usr/share/icons/hicolor/*/apps/fluxer.png; do
+# 4. Icons — handle fluxer.png or fluxer-canary.png
+for iconpath in usr/share/icons/hicolor/*/apps/fluxer*.png; do
+    [ -e "$iconpath" ] || continue
     size=$(echo "$iconpath" | cut -d/ -f5)
     install -Dm0644 "$iconpath" \
         %{buildroot}%{_datadir}/icons/hicolor/${size}/apps/%{appid}.png
 done
 
 %files
-%license opt/Fluxer/LICENSE.electron.txt
-%doc opt/Fluxer/LICENSES.chromium.html
+%license %{_libdir}/%{name}/LICENSE.electron.txt
+%doc %{_libdir}/%{name}/LICENSES.chromium.html
 %{_bindir}/%{name}
+%exclude %{_libdir}/%{name}/LICENSE.electron.txt
+%exclude %{_libdir}/%{name}/LICENSES.chromium.html
 %{_libdir}/%{name}/
 %{_datadir}/applications/%{appid}.desktop
 %dir %{_datadir}/icons/hicolor
