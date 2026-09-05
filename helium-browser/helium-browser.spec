@@ -4,7 +4,7 @@
 %global __requires_exclude_from ^/opt/helium/.*$
 %global __provides_exclude_from ^/opt/helium/.*$
 Name:           helium-browser
-Version:        0.16.4.1
+Version:        0.16.5.1
 Release:        0
 Summary:        Private, fast, and honest web browser
 License:        GPL-3.0-only
