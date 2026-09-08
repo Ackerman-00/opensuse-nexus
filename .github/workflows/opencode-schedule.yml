@@ -2,9 +2,7 @@ name: opencode-schedule
 
 on:
   schedule:
-    - cron: '0 0 2,5,8,11,14,17,20,23,26,29 * *'       # 36h cycle: runs at 00:00 on days ≡2 (mod 3)
-    - cron: '0 12 3,6,9,12,15,18,21,24,27,30 * *'      # and 12:00 on days ≡0 (mod 3) - NEVER at the
-                                                       # same 12h slot as check-updates or official-update
+    - cron: '10 */6 * * *'   # Every 6 hours at :10 - 10 min after update-packages.yml ('0 */6')
   workflow_dispatch:
     inputs:
       relay:
@@ -219,8 +217,8 @@ jobs:
             - Each package lives in its own directory with a .spec file, a .changes
               file (openSUSE changelog), often an update.sh (an upstream-check script)
               and a _service file. update-packages.yml (GitHub Actions, "Nexus
-              Auto-Updater (OBS Pipeline)") runs every 10 hours (cron '0 */10 * * *',
-              minute 0), i.e. 20 minutes before this workflow: it runs update.sh for
+              Auto-Updater (OBS Pipeline)") runs every 6 hours (cron '0 */6 * * *',
+              minute 0), i.e. 10 minutes before this workflow ('10 */6'): it runs update.sh for
               packages that have one and scans the rest against GitHub release tags,
               bumping spec versions and committing to main directly, then syncs changed
               packages to OBS via its API (using OBS_USER/OBS_PASS) and triggers a
