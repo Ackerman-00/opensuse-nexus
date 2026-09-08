@@ -25,7 +25,17 @@ CURRENT_COMMIT=$(grep -E "^%global commit" "$SPEC_FILE" | awk '{print $3}')
 SHORT_COMMIT=${LATEST_COMMIT:0:7}
 LATEST_DATE=$(echo "$LATEST_DATE_RAW" | sed 's/[-T:Z]//g')
 
+UP_TO_DATE=0
 if [ "$CURRENT_COMMIT" == "$LATEST_COMMIT" ]; then
+    UP_TO_DATE=1
+fi
+
+# The Source artifacts are gitignored and never present in fresh CI
+# checkouts. Always ensure they exist locally so the OBS sync step can
+# upload them; if OBS ever loses them while the commit is unchanged,
+# this prevents a rebuild failure. The version guard stays a pure
+# commit comparison.
+if [ -f "xwayland-satellite-$SHORT_COMMIT.tar.gz" ] && [ -f vendor.tar.xz ] && [ -f cargo_config ] && [ "$UP_TO_DATE" -eq 1 ]; then
     echo "✅ Package is already at the latest commit ($SHORT_COMMIT). No update needed."
     exit 0
 fi
@@ -72,6 +82,11 @@ rm -rf "xwayland-satellite-$LATEST_COMMIT"
 if ! [ -s vendor.tar.xz ] || ! [ -s cargo_config ]; then
     echo "❌ Vendor tarball/config missing; spec left untouched."
     exit 1
+fi
+
+if [ "$UP_TO_DATE" -eq 1 ]; then
+    echo "Version unchanged but artifacts refreshed; only the artifacts need re-syncing to OBS."
+    exit 0
 fi
 
 # 2. Update the spec file globals natively
