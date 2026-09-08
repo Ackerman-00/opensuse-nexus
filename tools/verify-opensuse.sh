@@ -6,13 +6,38 @@ RELAY=".opencode-relay.md"
 FAIL=0
 echo "----- VERIFICATION REPORT -----"
 if [[ -f "$RELAY" ]]; then
-  dep_rows=$(grep -c "deps-verified\|deps-fixed" "$RELAY" 2>/dev/null || echo 0)
-  echo "Dependency table rows: $dep_rows (need >=21, need 21 rows deps-verified/deps-fixed)"
-  if [[ "$dep_rows" -lt 21 ]]; then
-    echo "FAIL: dependency audit table has $dep_rows rows, need 21"
+  if [[ -n "$RUN_ID" ]] && ! grep -qx "run_id: $RUN_ID" "$RELAY"; then
+    echo "FAIL: NOT COMPLETE -- relay is not for this run (expected run_id: $RUN_ID)"
     FAIL=1
   else
-    echo "PASS: Dependency table: $dep_rows rows"
+    echo "PASS: relay run_id matches this run"
+  fi
+  expected=$(ls */*.spec 2>/dev/null | wc -l)
+  if [[ "$expected" -eq 0 ]]; then
+    echo "FAIL: NOT COMPLETE -- no */*.spec found (run from repo root)"
+    FAIL=1
+  fi
+  dep_rows=$(grep -c "deps-verified\|deps-fixed" "$RELAY" 2>/dev/null || echo 0)
+  echo "Inventory: $expected specs; dependency table rows: $dep_rows"
+  if [[ "$dep_rows" -lt "$expected" ]]; then
+    echo "FAIL: NOT COMPLETE -- dependency audit table has $dep_rows rows, need $expected (one per spec)"
+    FAIL=1
+  else
+    echo "PASS: Dependency table: $dep_rows rows (>= $expected)"
+  fi
+  unproven_rows=$(grep -c "unproven:" "$RELAY" 2>/dev/null || echo 0)
+  echo "Correctness-contract rows: $unproven_rows (need $expected)"
+  if [[ "$unproven_rows" -lt "$expected" ]]; then
+    echo "FAIL: NOT COMPLETE -- $unproven_rows audit rows carry the unproven: contract, need $expected (one per spec)"
+    FAIL=1
+  else
+    echo "PASS: Correctness contract present on $unproven_rows rows"
+  fi
+  if ! grep -q "| package | packaged version |" "$RELAY"; then
+    echo "FAIL: NOT COMPLETE -- version accuracy table (priority 2 deliverable) missing in relay"
+    FAIL=1
+  else
+    echo "PASS: Version accuracy table present"
   fi
   for tool in "spec-cleaner" "rpmlint" "zypper"; do
     if ! grep -qi "$tool.*PASS\|PASS.*$tool" "$RELAY"; then
@@ -41,5 +66,5 @@ for spec in */*.spec; do
 done
 if [[ "$bad" -gt 0 ]]; then echo "FAIL: $bad specs malformed"; FAIL=1; fi
 if [[ "$FAIL" -ne 0 ]]; then echo "FAIL: NOT COMPLETE -- agent must continue working"; exit 1; fi
-echo "PASS: VERIFICATION PASSED -- all 21 deps rows, evidence, install+battle test present"
+echo "PASS: VERIFICATION PASSED -- all $expected deps rows, version table, evidence, install+battle test present"
 exit 0

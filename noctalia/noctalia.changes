@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Sep 08 14:30:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Fix RPM version back to upstream 5.0.1 (2026-09-03 sync wrongly shipped
+  5.01: update.sh stripped the dot before the last component). Add Epoch 1
+  so the corrected version upgrades cleanly (rpm sorts 5.01 > 5.0.1).
+  Harden update.sh to never strip dots again.
+
+-------------------------------------------------------------------
 Thu Sep 03 20:37:07 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Update to upstream version 5.01

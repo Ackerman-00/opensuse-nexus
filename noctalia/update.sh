@@ -31,8 +31,10 @@ if [ -z "$LATEST_TAGVER" ] || [ "$LATEST_TAGVER" == "null" ]; then
 fi
 
 # Convert upstream tag to RPM version: dashes become tildes for pre-release ordering
-# e.g. 5.0.0-beta.7 -> 5.0.0~beta7 (openSUSE convention)
-LATEST_VER=$(echo "$LATEST_TAGVER" | sed 's/-/~/g; s/\.\([0-9][0-9]*\)$/\1/')
+# e.g. 5.0.0-beta.7 -> 5.0.0~beta.7 (openSUSE convention). NEVER strip dots:
+# a past revision removed the dot before the last component (5.0.1 -> 5.01),
+# which sorts NEWER in rpm vercmp and disagrees with every other packager.
+LATEST_VER=$(echo "$LATEST_TAGVER" | sed 's/-/~/g')
 
 CURRENT_VER=$(grep -E "^Version:" "$SPEC_FILE" | awk '{print $2}')
 CURRENT_TAGVER=$(grep -E "^%global tagver" "$SPEC_FILE" | awk '{print $3}')

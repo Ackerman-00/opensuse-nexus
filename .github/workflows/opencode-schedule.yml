@@ -45,9 +45,53 @@ jobs:
           git config --global user.email "41898282+opencode-agent[bot]@users.noreply.github.com"
           git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
-      - name: Install opencode (latest)
+      - name: Install opencode (latest, resilient)
         shell: bash
-        run: curl -fsSL https://opencode.ai/install | bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -u
+          mkdir -p "$HOME/.opencode/bin"
+          export PATH="$HOME/.opencode/bin:$PATH"
+          # 1) Official installer, retried: its internal version fetch can flap
+          #    or hit the shared-runner-IP 60/hr GitHub quota. curl retries +
+          #    4 outer attempts ride out transients.
+          for i in 1 2 3 4; do
+            if curl -fsSL --retry 3 --retry-delay 10 --retry-all-errors https://opencode.ai/install | bash; then
+              break
+            fi
+            echo "opencode install attempt $i/4 failed - sleeping 30s"
+            sleep 30
+          done
+          # 2) npm fallback (documented install method at opencode.ai). Link the
+          #    binary into $HOME/.opencode/bin so later steps need no PATH change.
+          if ! command -v opencode >/dev/null 2>&1; then
+            echo "official installer failed - trying npm"
+            npm install -g opencode-ai || sudo npm install -g opencode-ai || true
+            if command -v opencode >/dev/null 2>&1; then
+              ln -sf "$(command -v opencode)" "$HOME/.opencode/bin/opencode"
+            fi
+          fi
+          # 3) Authenticated GitHub-release fallback: GITHUB_TOKEN gets 1000/hr
+          #    in Actions, immune to the shared-IP quota that breaks the script's
+          #    version fetch. Asset name discovered live via API, never hardcoded.
+          if ! command -v opencode >/dev/null 2>&1; then
+            echo "npm fallback failed - trying authenticated gh release download"
+            asset="$(gh release view --repo sst/opencode --json assets --jq '.assets[].name' | grep -E '^opencode-linux-(x64|amd64).*\.(tar\.gz|tgz|zip)$' | head -n 1)"
+            if [ -n "$asset" ]; then
+              echo "downloading asset: $asset"
+              mkdir -p /tmp/opencode-dl
+              gh release download --repo sst/opencode --pattern "$asset" --dir /tmp/opencode-dl --clobber
+              case "$asset" in
+                *.zip) unzip -o /tmp/opencode-dl/"$asset" -d "$HOME/.opencode/bin" ;;
+                *) tar -xzf /tmp/opencode-dl/"$asset" -C "$HOME/.opencode/bin" ;;
+              esac
+            else
+              echo "no linux x64 asset found in latest sst/opencode release"
+            fi
+          fi
+          # Hard gate: every later step assumes `opencode` exists.
+          command -v opencode && opencode --version
 
       - name: Run opencode
         shell: bash
@@ -67,10 +111,29 @@ jobs:
             fi
             printf '%s' "$content" | grep -qx "run_id: $RUN_ID" && printf '%s' "$content" | grep -qi "status: complete" && printf '%s' "$content" | grep -qi "PACKAGE.*BR\|deps-verified\|dependency audit"
           }
-          for model in "opencode/x-preview-f-free" "opencode/muse-spark-1.2-contributor-free" "opencode/mimo-v2.5-free" "opencode/hy3-free" "opencode/nemotron-3-ultra-free" "opencode/nemotron-3.5-lightning-free" "opencode/big-pickle"; do
+          # Start jitter: many schedulers fire on sharp cron boundaries - a random
+          # 0-3 min delay desyncs this run from the thundering herd that knocks
+          # free-model gateways over (AI_APICallError: socket closed). Cheap
+          # insurance inside a 355-min job.
+          sleep $((RANDOM % 180))
+          for model in "opencode/muse-spark-1.3-contributor-free" "opencode/mimo-v2.5-free" "opencode/ling-3.0-flash-fin-free" "opencode/nemotron-3-ultra-free" "opencode/nemotron-3.5-lightning-free" "opencode/big-pickle"; do
             echo "=== opencode run attempt with $model ==="
             exit_code=0
-            MODEL="$model" opencode run -m "$model" --dangerously-skip-permissions --agent=build --print-logs "$PROMPT" || exit_code=$?
+            # Per-model retries with backoff: free-tier gateways drop sockets under
+            # load. A flap is NOT a dead model - retry the SAME model before
+            # falling through. Bounded at 3 tries with full jitter.
+            for attempt_n in 1 2 3; do
+              if MODEL="$model" opencode run -m "$model" --dangerously-skip-permissions --agent=build --print-logs "$PROMPT"; then
+                exit_code=0
+                break
+              fi
+              exit_code=$?
+              if [ "$attempt_n" -lt 3 ]; then
+                delay=$((RANDOM % (120 * attempt_n)))
+                echo "=== $model try $attempt_n/3 failed (exit $exit_code) - backing off ${delay}s ==="
+                sleep "$delay"
+              fi
+            done
             if [ "$exit_code" -eq 0 ]; then
               ok=0
               for attempt in $(seq 1 10); do
@@ -89,12 +152,13 @@ jobs:
             else
               echo "=== attempt with $model failed (exit $exit_code) - trying next ==="
             fi
-            sleep 15
+            # Long inter-model sleep: hammering a loaded gateway faster makes it worse.
+            sleep 60
           done
           exit 1
         env:
-          MODEL: opencode/x-preview-f-free
-          OPENCODE_CONFIG_CONTENT: '{"small_model":"opencode/x-preview-f-free"}'
+          MODEL: opencode/muse-spark-1.3-contributor-free
+          OPENCODE_CONFIG_CONTENT: '{"small_model":"opencode/mimo-v2.5-free"}'
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -344,10 +408,13 @@ jobs:
 
               a0. CHECK OFFICIAL PACKAGING FIRST (2026 advanced -- web search latest, August 2026): For `{pkg}`, first check the official distro packaging -- openSUSE Factory (build.opensuse.org/package/show/openSUSE:Factory/<pkg> + src.opensuse.org) (`osc co openSUSE:Factory <pkg> <pkg>.spec or search build.opensuse.org`) -- if found, read its `BuildRequires/Requires`/`version` as the latest reference for dependencies (official is where newer spec land first). If official has a newer spec/dependencies than ours, align with it (keep our repo's build flags). If official has no spec for this package (404 / no file), then proceed to tear apart upstream `tar`/`deb`/`rpm`/`AppImage` in Docker as below -- download into `/tmp` (never repo tree), extract, and derive deps from inside (`ldd` `NEEDED` vs `BuildRequires/Requires` vs `RDEPEND` etc.). Web-search 2026 for official + upstream before deciding.
               a. OPEN THE PACKAGE. Read the FULL spec (every BuildRequires /
-                 Requires / BuildConflicts, every %global, Source URLs), the
-                 .changes file, and update.sh. Download the Source0 tarball
-                 into the working tree (it is gitignored, safe) and EXTRACT
-                 it. Do not reason about dependencies from memory - inspect
+                  Requires / BuildConflicts, every %global, Source URLs), the
+                  .changes file, and update.sh. Download the Source0 tarball
+                  into /tmp (NEVER the repo working tree - see CLEAN-TREE
+                  DISCIPLINE), preferably inside the clean Tumbleweed container
+                  from the INSTALL-VERIFICATION SWEEP so `ldd`/soname findings
+                  match the target distro, and EXTRACT
+                  it. Do not reason about dependencies from memory - inspect
                  the actual upstream files:
                  - Rust: Cargo.toml / Cargo.lock (dependencies + build-deps +
                    dev-deps; vendor dir if present)
@@ -409,12 +476,16 @@ jobs:
                  project (it lists every package's resolved build deps) - if a
                  dep you consider missing is NOT in _builddepinfo either, OBS
                  cannot see it and the spec genuinely lacks it.
-              e. ALSO AUDIT RUNTIME Requires (what the installed binary/desktop
-                 file needs at runtime: shared libs via ldd, themes, fonts,
-                 helper binaries, XDG portal services, etc. - check the
-                 installed files and upstream docs) and find EXTRA/unneeded
-                 dependencies that can be dropped (dead BuildRequires rot).
-                 Keep the spec minimal and correct.
+               e. ALSO AUDIT RUNTIME Requires (what the installed binary/desktop
+                  file needs at runtime: shared libs via ldd, themes, fonts,
+                  helper binaries, XDG portal services, etc. - check the
+                  installed files and upstream docs) and find EXTRA/unneeded
+                  dependencies that can be dropped (dead BuildRequires rot).
+                  Keep the spec minimal and correct. Cross-check the built RPM
+                  directly: `rpm -qp --requires/--provides` on the fresh
+                  container build - every soname Requires must resolve via
+                  `zypper what-provides`, and any manual Requires absent from
+                  the RPM's own metadata must be justified in the relay.
               f. APPLY AND VERIFY. Add the missing deps to the spec (alphabet-
                  ized, following existing spec conventions), commit, sync to
                  OBS, trigger the rebuild, and wait for it: an added dep that
@@ -430,7 +501,7 @@ jobs:
                  (high/medium/low) for any package you could not fully verify,
                  and why.
               h. 2026 AUTOMATED EXCELLENCE CHECKS (MANDATORY - August 2026 openSUSE - excellent .spec aka excellent specfile):
-                 For EVERY spec you touched (and for at least 5-sample of the full 21), run the modern openSUSE toolchain locally and paste output. This is how an "excellent spec" (openSUSE:Specfile_guidelines Aug 2026) is proven:
+                 For EVERY spec you touched (and for at least a 5-sample of the full STEP A inventory - derive the count via `ls */*.spec`, currently 21, NEVER hardcode the number), run the modern openSUSE toolchain locally and paste output. This is how an "excellent spec" (openSUSE:Specfile_guidelines Aug 2026) is proven:
                  - `spec-cleaner` (openSUSE:Tools, Factory dos/donts) -- run `spec-cleaner <spec>`; must be clean or diff justified (one BuildRequires per line, macros not hard-coded `/usr/bin` etc.)
                  - `rpmlint <spec>` + `rpmlint <rpm>` + `brp-check-suse`/`post-build-checks` -- fix E: errors, handle badness score; OBS runs these as `rpmlint.log` after build -- must be clean. See `openSUSE:Packaging_checks` for suppressing false positives via `*rpmlintrc`
                  - `rpmspec -P --define "_topdir /tmp" <spec>` -- macro expansion must exit 0; `rpmbuild -bs` must produce SRPM
@@ -439,6 +510,43 @@ jobs:
                  - AutoReqProv must be left on; `%global __requires_exclude`/`__provides_exclude` only for bundled Electron/Chromium as in fluxer/zen-browser; never invent
                  - `%autosetup -q`, `%make_build`/`%make_install`, `%find_lang`, `%config(noreplace)` per Specfile_guidelines; `Summary`/`Group`/`License` SPDX correct
                  Log each tool's 1-line result per spec; any failure = deps-broken. Tools available via `tools/teardown-sweep.py:check_rpm_dependencies` (now does `spec-cleaner`/`rpmlint` hooks) -- you may call it, but YOU do the reasoning. Teardown is done BY YOU, the agent, not by a separate pass-anyway script; sweep is auxiliary evidence, not the verdict.
+
+             DEPENDENCY CORRECTNESS PROOF (MANDATORY, EVERY RUN - "deps-verified"
+             is a PROOF, not an eyeball. Upstream dependencies MUST be all correct:
+             complete, minimal, floored, and provenance-cited. Earn every audit row:)
+               a. PROVENANCE PER DEP: every BuildRequires and Requires must cite its
+                  source - the exact upstream file and symbol that demands it
+                  (meson.build dependency('x'), Cargo.toml [dependencies] entry,
+                  CMake find_package, go.mod require, a subproject meson.build,
+                  a .desktop Exec helper, a systemd unit), or
+                  `distro-integration` with a one-line justification
+                  (desktop-file-utils, systemd macros, implicit header-only
+                  includes). A dep with no citable source = UNPROVEN =
+                  a bug until cited or dropped.
+               b. MINIMUM-VERSION RECONCILIATION: every upstream-declared floor
+                  (meson version: '>=N', Cargo "x = "N"", CMake minimum) MUST
+                  appear in our spec (`pkgconfig(x) >= N`). A floor we omit rots
+                  silently when Tumbleweed lags; a floor we ADD that upstream
+                  never declared must be justified (distro reality) or dropped.
+                  NEVER transform the version string itself (cf. the noctalia
+                  5.01 incident: read the tag, never mangle it).
+               c. REVERSE DIRECTION: every upstream-declared dep must resolve to
+                  exactly one of: a spec BuildRequires, an explicit
+                  vendored/bundled note (crate list byte-equal to Cargo.lock -
+                  regenerate vendor tarballs on lock change), a named
+                  distro-provided transitive, or `optional-disabled` with the
+                  exact -D flag that disables it. Nothing unaccounted, nothing
+                  twice: a `-devel` line shadowed by an identical pkgconfig()
+                  twin is a duplicate - keep the pkgconfig() form.
+               d. PROVIDER IDENTITY for ambiguous mappings: prove with
+                  `zypper what-provides 'pkgconfig(x)'` (or OBS _builddepinfo)
+                  inside the container and record the winning package. Never
+                  guess an owner.
+               e. OUTPUT CONTRACT: every audit-table row carries `unproven: 0`,
+                  or names each unproven/unmapped dep explicitly as
+                  blocked-(which dep + why). A row claiming deps-verified with
+                  unproven > 0 fails the gate; the external verifier counts
+                  `unproven:` tokens and requires one per inventory package.
 
             INSTALL-VERIFICATION SWEEP (MANDATORY - "zypper in <pkg>" MUST
             work on a real openSUSE machine, not just build on OBS). An OBS
@@ -528,8 +636,10 @@ jobs:
                   e. SCOPE: this run MUST install-test, in priority order: every package you
                   touched or re-uploaded this run; every package whose binary
                   changed since its last successful install test; then the
-                  oldest still-uncovered packages until your time budget is
-                  used up. Update the coverage ledger in .opencode-relay.md
+                   oldest still-uncovered packages until your time budget is
+                   used up. Record the Tumbleweed snapshot tested in every
+                   table row and the ledger (Slowroll lags the same binaries
+                   by days, so TW-plus-snapshot is the proof). Update the coverage ledger in .opencode-relay.md
                   after every test. The run is NOT complete while any package
                   whose binary changed since its last test remains untested.
                   Packages that are pure -devel/library or that cannot run
@@ -538,13 +648,13 @@ jobs:
                   recorded.
               f. MANDATORY DELIVERABLE - install-test table in your final
                  summary, one row per package tested:
-                 | package | OBS build | zypper install test | smoke test |
-                 status |
+                  | package | repo/snapshot | OBS build | zypper install test | smoke test |
+                  status |
                  where status is one of: installable / fixed / broken-(dep)
                  / blocked-(reason). Any package you changed but did not
                  install-test is an unfinished package.
               g. DOCKER BATTLE TEST + ALL CONTENT (MANDATORY - every binary + repo itself in a clean Tumbleweed container, not just OBS "succeeded"). This is not optional:
-                 1. FOR EVERY .rpm in OBS home:ackerman (all 21): download via `osc getbinaries` or `zypper --plus-content` + `docker run --rm opensuse/tumbleweed zypper --no-gpg-checks in --dry-run <pkg>` + real `zypper in` for at least 5 diverse per run (oldest-uncovered first, plus every touched). No manual `rpm -qp --requires` fallback is a battle test.
+                 1. FOR EVERY .rpm in OBS home:ackerman (all 21 - derive the count via `ls */*.spec`, never hardcode): download via `osc getbinaries` or `zypper --plus-content` + `docker run --rm opensuse/tumbleweed zypper --no-gpg-checks in --dry-run <pkg>` + real `zypper in` for at least 5 diverse per run (oldest-uncovered first, plus every touched) + FLEET REBUILD ROTATION per UPSTREAM INTELLIGENCE SWEEP above (rebuild oldest slice from CURRENT specs, full fleet within 3 runs). No manual `rpm -qp --requires` fallback is a battle test.
                  2. ALL CONTENT: `ls -R`/`find . -type f | sort` -- every `*/*.spec`, `*/*.changes`, `*/_service`, `*/update.sh`, `.github/workflows/*.yml` (`yaml.safe_load` valid), `README.md` install (`zypper addrepo` URL must match Docker path or fix README) must be checked; any file not checked = gap.
                  3. REPO ITSELF: inside clean `opensuse/tumbleweed` container, `zypper addrepo https://download.opensuse.org/repositories/home:ackerman/openSUSE_Tumbleweed/home:ackerman.repo` + `zypper refresh` + `zypper se --repo home_akerman` must list all 21; `osc` `co`/`build` dry-run if available. Think like new openSUSE user who just added the repo -- if they would hit it, you must hit it first.
 
@@ -603,7 +713,11 @@ jobs:
                  tmpfiles, GSettings schemas, translations (%find_lang),
                  D-Bus service files, configs + examples, symlinks,
                  companion binaries (e.g. CLI + GUI split, -devel
-                 headers/pkgconfig files). A MISSING artifact = a bug.
+                  headers/pkgconfig files). A MISSING artifact = a bug.
+                  License files (installed under %license) and upstream test
+                  suites (wired into %check and run during the container
+                  rebuild) are artifacts too - a missing %license file or an
+                  unrunnable test suite is the same class of bug.
               b. The reverse: anything WE ship that upstream no longer
                  produces (renamed, removed, superseded) is dead weight -
                  drop it, matching the "extra/unneeded deps" rule.
@@ -611,10 +725,69 @@ jobs:
                  %files - every shipped file must be installed or explicitly
                  accounted for (documented exclusion, e.g. unneeded
                  lang-packs or updater binaries).
-              d. Extend the dependency audit table with a completeness
-                 column: | artifacts: complete | missing-<X> |
-                 blocked-(reason). A package with a missing artifact is not
-                 done.
+               d. Extend the dependency audit table with a completeness
+                  column: | artifacts: complete | missing-<X> |
+                  blocked-(reason). A package with a missing artifact is not
+                  done.
+
+             UPSTREAM INTELLIGENCE SWEEP (MANDATORY - be the upstream's own
+             release engineer, not a version-string copier. The checklists
+             below are the FLOOR: show initiative - if you spot an improvement
+             or gap no checklist covers, pursue it). Version numbers say THAT
+             upstream moved; only upstream's own words say WHAT changed. A
+             version bump WITHOUT this reading is an incomplete update. For
+             every package whose upstream changed since its last audit (and
+             for all P0 packages every run):
+               a. READ the delta: release notes/changelog entries, commit titles
+                  since the pinned commit (`git log <pin>..HEAD --oneline`), and
+                  any migration/upgrade notes. Hunt explicitly for: added/removed
+                  dependencies (including TRANSITIVE - re-read Cargo.lock /
+                  pnpm-lock.yaml / go.sum, not just manifests), build-system
+                  changes (meson options renamed, cmake minimum raised, new
+                  cargo --features), new/renamed/removed install artifacts and
+                  binaries/services, CVE or security mentions, deprecated APIs
+                  or flags, and changed asset layouts (a release shipping only
+                  .apk or restructured tarballs = HOLD or rework, never a blind
+                  bump - cf. the noctalia 5.01 lesson: read the tag, never
+                  transform it blindly).
+               b. READ upstream's own packaging hints: packaging/ and dist/
+                  dirs, .spec/.deb/PKGBUILD files, CI workflows, and install
+                  docs. If upstream ships a unit file, completions, appstream
+                  metadata, or build flags we lack, that is a packaging gap:
+                  close it (with a .changes entry) or justify it in the relay.
+               c. ASK what is missing: diff our %files/Requires against
+                  upstream's documented feature matrix (optional backends,
+                  plugins, integrations). A shippable upstream feature we
+                  silently drop - or a default we set against upstream
+                  guidance - is a bug.
+               d. CHECK upstream health signals: repo archived or renamed?
+                  default branch moved? release cadence collapsed or assets
+                  moved hosts? Any yes = early warning in the relay + verify
+                  the Source0/_service strategy still holds (new host, new
+                  asset names, new tag scheme - fix update.sh accordingly).
+               e. OUTPUT CONTRACT (one line per package; no line = not verified):
+                  `upstream-delta: <pkg> <old>-><new> | deps+/-: <list> |
+                  artifacts+/-: <list> | health: ok/flag-<what> |
+                  notes: <a few words>`.
+             FLEET BATTLE-TEST ROTATION (MANDATORY - every package earns a full
+             docker rebuild on a schedule, not just touched ones; extends the
+             DOCKER BATTLE TEST below). Touched and changed packages get
+             immediate rebuild + install + smoke in a fresh Tumbleweed
+             container (sections above). ON TOP of that, every run rebuilds
+             the next oldest slice of the fleet ledger from the CURRENT spec
+             (`rpmbuild -bb` in a fresh TW container per package, up to 4
+             parallel `docker run` jobs), installs the result with zypper,
+             and smoke-tests it. A failure here enters the priority-1 loop
+             exactly like a failed OBS build. The full 21-package fleet must
+             rotate through within 3 runs; record slice + next-start in the
+             relay. Fan out with parallel subagents (one per batch); serialize
+             only pushes and OBS syncs. Time-box the SLICE, never the rigor:
+             fewer packages fully tested beats many glanced at.
+             IMPROVE THE MACHINE (MANDATORY). If the same failure class hits
+             twice (broken updater pattern, recurring dep rename, repeated HOLD
+             justification, repeated manual fix), fix the GENERATOR not the
+             instance: patch update.sh / the check / the documented rule so the
+             third run cannot trip on it. Record every pattern-fix in the relay.
 
             CURRENT OPENSUSE RELEASES - DISCOVER EVERY RUN. This repo
             serves the rolling codestreams Tumbleweed and Slowroll (NOT
@@ -637,6 +810,74 @@ jobs:
                  scope.
 
             Then work autonomously, in this priority order:
+
+            0. ALWAYS-PRIORITY = ALL PACKAGES (no exceptions). EVERY
+               package in this repo is priority: check EVERY package
+               for upstream changes EVERY run (git ls-remote HEAD for
+               -git packages, releases/tags for versioned ones, artifact
+               internals for prebuilt binaries - real change only, per
+               NO-CHURN). The eight named below simply go FIRST and get
+               the DEEPEST treatment each run because they move fast and
+               break silently - niri-git, xwayland-satellite-git, noctalia,
+               noctalia-greeter, mangowm-git, zen-browser, helium-browser,
+               lazyvim-git.
+               The delta/carry-over logic does NOT apply to the eight:
+               a. EVERY run, FIRST: check each against upstream HEAD
+                  (`git ls-remote` default branch + `gh api
+                  releases/latest` where applicable, authenticated and
+                  token-safe). If upstream moved, refresh the
+                  pin/commit/version + checksum + .changes entry immediately
+                  (NO-CHURN rules still apply - only push on real change).
+               b. EVERY run, regardless of whether they changed: FULL
+                  upstream dependency re-derivation from scratch
+                  (re-tear per PACKAGE DEPENDENCY DEEP AUDIT - spec vs
+                  upstream build files, no reuse of prior audits),
+                  the 2026 excellence toolchain
+                  (`spec-cleaner`, `rpmlint`, `rpmspec -P`, `rpmbuild -bs`,
+                  `osc build` or the TW-container zypper resolve path),
+                  AND a fresh Tumbleweed container install test + smoke
+                  test. Record per-package PASS/FAIL with command output
+                  in the relay; a failure here outranks all other
+                  non-build-failure work.
+               c. Never mark these eight done based on a previous run's
+                  result. "Unchanged since last run" is not verification
+                  for these packages - re-verify every time.
+               d. SIBLING CROSS-REFERENCE (MANDATORY for all eight, every
+                  run). For each priority package, fetch the fedora-nexus
+                  counterpart spec (same upstream stack - concrete wins
+                  already proven there that must NOT regress here: helium
+                  /opt/helium `__provides_exclude_from` guard, fuller
+                  noctalia BuildRequires, LTO escape-hatch documentation)
+                  AND the openSUSE Factory spec
+                  (build.opensuse.org/package/show/openSUSE:Factory/<pkg>)
+                  where one exists. Terra anda specs may be consulted as an
+                  upstream-dep cross-check ONLY (Fedora dep names differ -
+                  always re-verify via zypper/OBS _builddepinfo, never copy).
+                  If a sibling is newer on a REAL upstream change, sync UP
+                  (real change only, per NO-CHURN). NEVER regress our fixes
+                  to "match" a sibling - siblings are reference for spotting
+                  OUR gaps, not a downgrade target.
+                  TOKEN-SAFE FETCH: `gh api ... --cache 3600s` for GitHub
+                  (GITHUB_TOKEN/GH_TOKEN are in env); OBS API uses
+                  OBS_USER/OBS_PASS basic auth (unauthenticated OBS calls
+                  get 401 - never retry those blindly, attach the creds).
+                  Record per package one line:
+                  `sibling-ref: <source>@<shortsha/ver> | ours: <pin/ver> |
+                  delta: ahead/behind/in-sync | kept-improvements: <list>`.
+               e. UNIVERSAL UPSTREAM CHECK (all remaining packages, EVERY
+                  run - priority 2 is the full implementation, this is the
+                  non-skippable minimum): for EVERY non-eight package,
+                  run the same HEAD/release/artifact check as (a) plus a
+                  sibling-reference check where one exists (fedora-nexus
+                  counterpart, openSUSE Factory, repology/AUR as
+                  independent trackers - token-safe fetch per (d), never
+                  unauthenticated). If upstream moved: full re-tear +
+                  excellence toolchain + install test exactly like (b),
+                  then sync per the THEN section. If unchanged: record
+                  one line `upstream: <ref>@<sha/ver> == spec, no action`
+                  with the command output - "unchanged" is a VERIFIED
+                  claim (ls-remote/tag/200-check output pasted), never an
+                  assumption. No package may be carried over unverified.
 
             1. FIX FAILED OBS BUILDS (highest priority).
                Query the OBS build results (endpoint above, use the OBS_USER/OBS_PASS env
@@ -680,10 +921,13 @@ jobs:
                  and the AUR package (e.g. aur.archlinux.org/packages/rootapp-bin).
                  This applies to EVERY binary-distributed package, not just
                  rootapp - never trust a filename or homepage string alone.
-               - For GitHub projects, use the API and reconcile results:
-                     curl -s https://api.github.com/repos/<owner>/<repo>/releases/latest
-                     curl -s https://api.github.com/repos/<owner>/<repo>/tags
-                 Web-search too; if API and search disagree, dig until certain.
+                - For GitHub projects, use the API via `gh api` (authenticated,
+                  token-safe per GITHUB API RATE LIMITS above - NEVER bare
+                  `curl https://api.github.com`, which burns the 60/hr
+                  unauthenticated quota) and reconcile results:
+                      gh api repos/<owner>/<repo>/releases/latest --cache 3600s --jq .tag_name
+                      gh api repos/<owner>/<repo>/tags --cache 3600s --jq '.[0].name'
+                  Web-search too; if API and search disagree, dig until certain.
                - For -git/-snapshot packages, compare the pinned %global commit against
                  the current upstream default-branch HEAD; if upstream has new commits,
                  refresh commit + gitdate together.
@@ -758,9 +1002,26 @@ jobs:
                it must return 200. Download the source and `sha256sum` must equal the
                value in the spec. Update the checksum whenever the version changes.
 
-               STEP F - SANITY-CHECK DEPENDENCIES. Web-search the latest release notes
-               for changed BuildRequires/Requires and update the spec if needed. Update
-               the README.md version column too.
+                STEP F - SANITY-CHECK DEPENDENCIES. Web-search the latest release notes
+                for changed BuildRequires/Requires and update the spec if needed. Update
+                the README.md version column too.
+
+                STEP G - CVE TRIAGE (MANDATORY, cheap - OSV.dev needs no auth).
+                Batch-query every STEP A package's upstream name+version against
+                `https://api.osv.dev/v1/querybatch` (one POST, up to 1000
+                queries). Map each package to its REAL upstream ecosystem
+                (PyPI / crates.io / npm / Go / etc. where one exists; -git
+                snapshots and ecosystem-less binaries get `cve: n/a-(reason)` -
+                never a fabricated mapping). Any HIGH/CRITICAL CVE with a fixed
+                version available = a bug: bump or patch it exactly like a
+                STALE package. Cross-check every HIGH/CRITICAL hit against a
+                second source, the GitHub Advisory Database (`gh api advisories
+                -f ecosystem=<eco> -f affects=<pkg> --cache 3600s`,
+                authenticated) - OSV alone is not enough per the 2026
+                multi-source consensus; confirmed-by-both = patch now,
+                singleton = verify before bump. Record per package `cve: clean/<CVE-ids>/
+                n/a-(reason)` alongside the version table (extend the row, do
+                not drop the 100% coverage rule).
 
                FINAL OUTPUT REQUIREMENT: your final summary MUST include a full
                verification table with one row per package:
@@ -776,16 +1037,15 @@ jobs:
                it (which the pipeline syncs to OBS). Do not churn: only add or bump what
                is genuinely new or outdated.
 
-            3. CHECK GITHUB ACTIONS HEALTH.
-               GET https://api.github.com/repos/Ackerman-00/opensuse-nexus/actions/runs and
+             3. CHECK GITHUB ACTIONS HEALTH.
+                Query recent runs via `gh api repos/Ackerman-00/opensuse-nexus/actions/runs` (authenticated, token-safe) and
                look for recent FAILED "Nexus Auto-Updater (OBS Pipeline)" runs. Identify the
                failing package/step (`gh run view <id> --log-failed` or the logs API) and
                fix the cause. If update.sh scripts are broken (bad URL parsing, missing
                versions), fix them so the auto-updater works again.
 
-            4. REVIEW ALL OPEN ISSUES like a human maintainer - AND REPLY.
-               GET https://api.github.com/repos/Ackerman-00/opensuse-nexus/issues (state=open,
-               no pull requests). EVERY open issue MUST get a reply - silence
+             4. REVIEW ALL OPEN ISSUES like a human maintainer - AND REPLY.
+                List open issues via `gh api repos/Ackerman-00/opensuse-nexus/issues --paginate -f state=open` (authenticated; filter out pull requests client-side). EVERY open issue MUST get a reply - silence
                is not an option. For each issue:
                - Read it fully, reproduce or diagnose it, and web-search for context.
                - DETERMINE WHO IS RIGHT. If the issue is a genuine packaging bug
@@ -813,8 +1073,8 @@ jobs:
                - Reply on issues WITH `gh issue comment <n>` even before any fix,
                  so the reporter always gets a response from this run.
 
-            5. REVIEW ALL OPEN PULL REQUESTS like a human maintainer - AND DECIDE.
-               GET https://api.github.com/repos/Ackerman-00/opensuse-nexus/pulls (state=open).
+             5. REVIEW ALL OPEN PULL REQUESTS like a human maintainer - AND DECIDE.
+                List open PRs via `gh api repos/Ackerman-00/opensuse-nexus/pulls -f state=open` (authenticated).
                For each PR: you are the maintainer - review it, test it, and
                merge / request changes / close it. Do NOT leave it hanging for a
                human. EVERY PR gets a comment with your verdict and reasoning.
@@ -858,7 +1118,7 @@ jobs:
                accurate and minimal.
 
             7. VALIDATE BEFORE COMMITTING.
-               Run `bash -n` on every update.sh you touch. Validate spec syntax where possible
+               Run `bash -n` on ALL update.sh in the repo every run (cheap - catches syntax rot before the auto-updater trips on it, see priority 3), plus full validation for every update.sh you touch. Validate spec syntax where possible
                (e.g. `rpmspec -P <file>` if rpm tools are available; otherwise careful manual
                review). Verify every source URL is reachable (`curl -sI`), and compute/check
                checksums with `sha256sum` on downloaded sources. Never commit an untested
@@ -889,7 +1149,7 @@ jobs:
                  and logs. Then move on.
 
             RELAY / LONG-RUN HANDOFF (MANDATORY): a run may last up to ~5.5 hours
-            (timeout-minutes: 330). NEVER let a run die with work unfinished or
+            (timeout-minutes: 355). NEVER let a run die with work unfinished or
             unrecorded - hand it over to the next runner.
               a. PICKUP ON START: if the relay state file .opencode-relay.md exists
                  on main with status "unfinished", or this run was started with the
@@ -975,9 +1235,14 @@ jobs:
             - You have FULL control: edit any file in the repo (specs, .changes, update.sh,
               workflows, configs, README/docs) whenever it needs fixing or updating - but always
               web-search and verify first, then validate before committing.
-            - NEVER end the run after "diagnostics only". A run whose final
-              output is only "checked versions, everything is up to date"
-              has FAILED to do its job. You are done ONLY when the
+             - NEVER end the run after "diagnostics only". A run whose final
+               output is only "checked versions, everything is up to date"
+               WITHOUT the mandatory version table, dependency audit table,
+               install-test table, and evidence in .opencode-relay.md
+               has FAILED to do its job. (Conversely: a fully-verified
+               zero-change run with all tables green and relay pushed IS
+               complete - do NOT manufacture churn pushes to look productive;
+               NO-CHURN still applies.) You are done ONLY when the
               pre-completion gate above is completed AND .opencode-relay.md
               on main shows a complete status with `run_id: $RUN_ID`.
               If the repo has ANY failed build, ANY open issue or PR, or
@@ -1030,7 +1295,7 @@ jobs:
               relay run before the timeout.
             - Don't get stuck: cap retries at 3 per package and escalate unresolvable problems
               via issues.
-            - VERIFICATION LOOP (MANDATORY - battle-tested 2026: pre-completion checklist + external verifier, agentpatterns.ai 2026-07-19 / contextOS 2026-08-14): Before declaring `status: complete`, you MUST run `bash tools/verify-opensuse.sh` and paste its `----- VERIFICATION REPORT -----` output. It checks numerical completion (21 rows with `deps-verified`/`deps-fixed` -- pre-count 21, post-grep must be 21), evidence strings (`spec-cleaner` / `rpmlint` / `zypper` from 2026 h. checks), and install-test + battle test table. Exit 1 = NOT COMPLETE -- keep working until exit 0. Do NOT write `status: complete` if verifier fails. Prompt 70-90%, verifier+gate near-100%.
+            - VERIFICATION LOOP (MANDATORY - battle-tested 2026: pre-completion checklist + external verifier, agentpatterns.ai 2026-07-19 / contextOS 2026-08-14): Before declaring `status: complete`, you MUST run `bash tools/verify-opensuse.sh` and paste its `----- VERIFICATION REPORT -----` output. It checks numerical completion (one row per STEP A inventory package with `deps-verified`/`deps-fixed` -- derive the expected count from `ls */*.spec`, post-grep count must reach it, not 0), evidence strings (`spec-cleaner` / `rpmlint` / `zypper` from 2026 h. checks), and install-test + battle test table. Exit 1 = NOT COMPLETE -- keep working until exit 0. Do NOT write `status: complete` if verifier fails. Prompt 70-90%, verifier+gate near-100%.
             - End every run with a concise final summary: what you fixed, which issues you
               closed, which PRs you merged/rejected, which OBS builds you verified and their
               result, and what remains. Include the pre-completion gate checklist
@@ -1044,7 +1309,7 @@ jobs:
         run: |
           echo "=== External verifier: tools/verify-opensuse.sh ==="
           bash tools/verify-opensuse.sh || {
-            echo "::error::Verification FAILED -- relay missing 21-row deps table or evidence. Agent skipped mandatory audit."
+            echo "::error::Verification FAILED -- relay missing full-inventory deps table or evidence. Agent skipped mandatory audit."
             exit 1
           }
 
