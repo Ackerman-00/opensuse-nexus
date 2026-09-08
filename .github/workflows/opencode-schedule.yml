@@ -230,8 +230,17 @@ jobs:
               Tumbleweed packages ~5-10 days after each Tumbleweed snapshot,
               so it is always slightly behind. Keep packaging usable on both
               (no Leap-only macros, use current Tumbleweed defaults) and
-              verify installs against Tumbleweed containers (Slowroll lags
-              the same binaries only by days, so a TW pass is proof enough).
+              install-test on BOTH distros, every time (a TW-only pass is NOT
+              proof for Slowroll - dependency skew between the codestreams is
+              exactly how "unresolvable" happens; cf. noctalia/protonplus).
+              Verified repo URLs (HTTP 200, do not guess variants):
+              Slowroll OSS = https://download.opensuse.org/slowroll/repo/oss/,
+              home:ackerman TW = https://download.opensuse.org/repositories/home:ackerman/openSUSE_Tumbleweed/,
+              home:ackerman Slowroll = https://download.opensuse.org/repositories/home:ackerman/openSUSE_Slowroll/.
+              README.md Installation section is the single source of truth for
+              these URLs (including the `home:ackerman.repo` file form) - if
+              they ever differ, README wins: follow README and correct this
+              prompt text to match.
             - Builds happen in OBS (project home:ackerman), triggered per-package when
               files are uploaded (cmd=runservice) or when a rebuild is requested
               (cmd=rebuild, valid on /source/<pkg> and /build/<project>).
@@ -592,7 +601,7 @@ jobs:
                  because the runtime is missing - install it. Then spin up a
                  fresh openSUSE Tumbleweed container, add the distro OSS repo
                  and the home:ackerman repo, and ACTUALLY INSTALL the built
-                 RPM with zypper. Example:
+                 RPM with zypper. Example (Tumbleweed):
                  docker run --rm -v "$PWD:/rpms" \
                    registry.opensuse.org/opensuse/tumbleweed:latest bash -lc '
                      zypper --non-interactive --gpg-auto-import-keys addrepo --refresh \
@@ -604,6 +613,28 @@ jobs:
                      rpm -V <pkg>
                      ldd "$(which <pkg>)"
                    '
+                 Then the SAME package on Slowroll (mandatory second distro -
+                 this is the test that catches "unresolvable"): official
+                 slowroll image if discoverable
+                 (`docker manifest inspect registry.opensuse.org/opensuse/slowroll:latest`),
+                 else the TW image with repos switched to Slowroll:
+                 docker run --rm -v "$PWD:/rpms" \
+                   registry.opensuse.org/opensuse/tumbleweed:latest bash -lc '
+                     zypper --non-interactive removerepo oss || true
+                     zypper --non-interactive --gpg-auto-import-keys addrepo --refresh \
+                       https://download.opensuse.org/slowroll/repo/oss/ slowroll-oss
+                     zypper --non-interactive --gpg-auto-import-keys addrepo --refresh \
+                       https://download.opensuse.org/repositories/home:ackerman/openSUSE_Slowroll/ nexus-slowroll
+                     zypper --non-interactive --gpg-auto-import-keys refresh
+                     zypper --non-interactive install --no-recommends /rpms/<pkg>-*.x86_64.rpm
+                     rpm -V <pkg>
+                   '
+                 The Slowroll MINIMUM is `zypper install --dry-run` resolution
+                 (it directly refutes "unresolvable"); full install + smoke is
+                 required for all P0 packages and whenever the dry-run is
+                 clean. Record per-distro results in separate table columns;
+                 a Slowroll-only failure is a real failure, not a waivable
+                 codestream quirk.
                  If zypper errors with "nothing provides 'X'" - the install
                  test FAILED and the package is NOT done, no matter what OBS
                  says. If docker is unavailable, fall back to
@@ -637,9 +668,10 @@ jobs:
                   touched or re-uploaded this run; every package whose binary
                   changed since its last successful install test; then the
                    oldest still-uncovered packages until your time budget is
-                   used up. Record the Tumbleweed snapshot tested in every
-                   table row and the ledger (Slowroll lags the same binaries
-                   by days, so TW-plus-snapshot is the proof). Update the coverage ledger in .opencode-relay.md
+                   used up. Record the Tumbleweed AND Slowroll snapshots tested
+                   in every table row and the ledger (both distros, every
+                   tested package - a row without both snapshots is an
+                   incomplete test). Update the coverage ledger in .opencode-relay.md
                   after every test. The run is NOT complete while any package
                   whose binary changed since its last test remains untested.
                   Packages that are pure -devel/library or that cannot run
@@ -648,13 +680,13 @@ jobs:
                   recorded.
               f. MANDATORY DELIVERABLE - install-test table in your final
                  summary, one row per package tested:
-                  | package | repo/snapshot | OBS build | zypper install test | smoke test |
+                  | package | repo/snapshot | OBS build | zypper install test (TW) | zypper install test (Slowroll) | smoke test |
                   status |
                  where status is one of: installable / fixed / broken-(dep)
                  / blocked-(reason). Any package you changed but did not
                  install-test is an unfinished package.
               g. DOCKER BATTLE TEST + ALL CONTENT (MANDATORY - every binary + repo itself in a clean Tumbleweed container, not just OBS "succeeded"). This is not optional:
-                 1. FOR EVERY .rpm in OBS home:ackerman (all 21 - derive the count via `ls */*.spec`, never hardcode): download via `osc getbinaries` or `zypper --plus-content` + `docker run --rm opensuse/tumbleweed zypper --no-gpg-checks in --dry-run <pkg>` + real `zypper in` for at least 5 diverse per run (oldest-uncovered first, plus every touched) + FLEET REBUILD ROTATION per UPSTREAM INTELLIGENCE SWEEP above (rebuild oldest slice from CURRENT specs, full fleet within 3 runs). No manual `rpm -qp --requires` fallback is a battle test.
+                 1. FOR EVERY .rpm in OBS home:ackerman (all of them - derive the count via `ls */*.spec`, never hardcode): download via `osc getbinaries` or `zypper --plus-content` + resolve AND install on BOTH TW and Slowroll containers per the INSTALL-VERIFICATION SWEEP above (`zypper in` for at least 5 diverse per run per distro, oldest-uncovered first, plus every touched on both) + FLEET REBUILD ROTATION per UPSTREAM INTELLIGENCE SWEEP above (rebuild oldest slice from CURRENT specs, full fleet within 3 runs). No manual `rpm -qp --requires` fallback is a battle test.
                  2. ALL CONTENT: `ls -R`/`find . -type f | sort` -- every `*/*.spec`, `*/*.changes`, `*/_service`, `*/update.sh`, `.github/workflows/*.yml` (`yaml.safe_load` valid), `README.md` install (`zypper addrepo` URL must match Docker path or fix README) must be checked; any file not checked = gap.
                  3. REPO ITSELF: inside clean `opensuse/tumbleweed` container, `zypper addrepo https://download.opensuse.org/repositories/home:ackerman/openSUSE_Tumbleweed/home:ackerman.repo` + `zypper refresh` + `zypper se --repo home_akerman` must list all 21; `osc` `co`/`build` dry-run if available. Think like new openSUSE user who just added the repo -- if they would hit it, you must hit it first.
 
@@ -881,11 +913,24 @@ jobs:
 
             1. FIX FAILED OBS BUILDS (highest priority).
                Query the OBS build results (endpoint above, use the OBS_USER/OBS_PASS env
-               vars). Find every package whose state is NOT "succeeded". For each failing
+               vars). Find every package whose state is NOT "succeeded" (failed /
+               broken / unresolvable / disabled-by-missing-dep). For each failing
                package, fetch its build log and inspect the failure. Diagnose the root
                cause: usually a bad source URL, version bump without checksum update, or a
                spec problem. Web-search the package and its upstream for known issues
-               before patching. Repair the spec / .changes / update.sh so it is consistent
+               before patching.
+               UNRESOLVABLE-STATE RULE (this is how noctalia/protonplus went
+               unresolvable): an "unresolvable" OBS state means a dependency
+               does not exist under the declared name in that codestream's
+               repos. REPRODUCE IT IN DOCKER FIRST - run the dual-distro
+               install test from the INSTALL-VERIFICATION SWEEP (TW container
+               + Slowroll container, OBS repos enabled) and watch zypper fail
+               with the same missing provider. The fix is a spec dep rename to
+               the real provider (proven via `zypper what-provides` inside the
+               container), then re-resolve in BOTH containers, then sync +
+               rebuild. NEVER fix an unresolvable blind (no container repro =
+               guessing) and never close it as transient: re-resolution output
+               from both distros is the only closure evidence. Repair the spec / .changes / update.sh so it is consistent
                and correct. If the repo's own automation in .github/workflows/* is causing
                failures, fix the workflow script too.
 
