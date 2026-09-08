@@ -41,7 +41,7 @@ jobs:
         run: |
           git config --global user.name "opencode-agent[bot]"
           git config --global user.email "41898282+opencode-agent[bot]@users.noreply.github.com"
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://x-access-token:${{ secrets.REPO_FULL_ACCESS_TOKEN || github.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Install opencode (latest, resilient)
         shell: bash
@@ -267,11 +267,21 @@ jobs:
               Build states you care about: succeeded / failed / broken / unresolvable /
               disabled / excluded / building / scheduled / unbroken. Inspect the _log
               to diagnose failures.
-            - TOKENS: `git push` authenticates with the OpenCode App token, which has
-              contents + workflows write, so you CAN modify .github/workflows/* and push
-              straight to main (a workflow step also configures global git credentials, so
-              all git pushes authenticate with GITHUB_TOKEN). `gh` commands use the
-              runner's GITHUB_TOKEN, which has
+            - TOKENS: `git push` authenticates with REPO_FULL_ACCESS_TOKEN (a PAT
+              with contents + workflows write), falling back to GITHUB_TOKEN
+              only if the secret is absent - the git-auth step wires
+              `REPO_FULL_ACCESS_TOKEN || github.token` exactly like
+              opencode.yml does. With the PAT you CAN modify
+              .github/workflows/* and push straight to main: workflow fixes
+              like issue #8's sync_files guard are YOUR job, not the owner's -
+              apply them, push, verify. With the GITHUB_TOKEN fallback, GitHub
+              HARD-REJECTS any push touching .github/workflows/ (this is the
+              exact denial the pipeline bot reported on update-packages.yml):
+              if a push is rejected that way, do NOT retry or work around it -
+              describe the exact problem in .opencode-relay.md and open an
+              issue with the full diff in the body for the owner to apply
+              manually, then continue with all non-workflow work. `gh`
+              commands use the runner's GITHUB_TOKEN, which has
               actions write (inspect/watch GitHub Actions runs), pull-requests write
               (merge), and issues write (open/close). Just use `gh` normally. Always
               `git fetch origin && git pull --rebase origin main` before pushing.
