@@ -1,7 +1,7 @@
 # These will be automatically populated by update.sh
-%global commit          459a4c3b1059671e766a46c7cc223827dc67e3d0
-%global shortcommit     459a4c3
-%global gitdate         20260602133554
+%global commit          2239177dbba96d01196eccc93aa1f80e5b73a8e0
+%global shortcommit     2239177
+%global gitdate         20260908101350
 %global base_version    16.0.0
 Name:           lazyvim-git
 Version:        %{base_version}+git%{gitdate}.%{shortcommit}
