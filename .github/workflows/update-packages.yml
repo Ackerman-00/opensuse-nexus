@@ -224,6 +224,20 @@ jobs:
             OBS_FILES=$(curl -s -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg" | grep -oP '(?<=<entry name=")[^"]+' || true)
 
             for remote_file in $OBS_FILES; do
+              # NEVER delete gitignored source artifacts (tarballs, vendor,
+              # cargo_config, repacked RPMs/AppImages/...) from a package
+              # without _service when the local tree lacks them (issue #8:
+              # sync wiped niri-git TW sources it could not re-upload).
+              if [ ! -f "$pkg/_service" ]; then
+                case "$remote_file" in
+                  *.tar.gz|*.tar.xz|*.tar.bz2|*.tar.zst|cargo_config|vendor*|*.rpm|*.AppImage|*.deb|*.keyring)
+                    if [ ! -f "$pkg/$remote_file" ]; then
+                      echo "    Keeping remote source artifact (no local copy to re-upload): $remote_file"
+                      continue
+                    fi
+                    ;;
+                esac
+              fi
               if [ ! -f "$pkg/$remote_file" ] || [ "$remote_file" == "update.sh" ]; then
                 echo "    Deleting obsolete file from OBS: $remote_file"
                 curl -s -X DELETE -u "$OBS_USER:$OBS_PASS" "https://api.opensuse.org/source/home:ackerman/$pkg/$remote_file"

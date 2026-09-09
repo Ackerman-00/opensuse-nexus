@@ -281,10 +281,27 @@ jobs:
               describe the exact problem in .opencode-relay.md and open an
               issue with the full diff in the body for the owner to apply
               manually, then continue with all non-workflow work. `gh`
-              commands use the runner's GITHUB_TOKEN, which has
-              actions write (inspect/watch GitHub Actions runs), pull-requests write
-              (merge), and issues write (open/close). Just use `gh` normally. Always
-              `git fetch origin && git pull --rebase origin main` before pushing.
+               commands use the runner's GITHUB_TOKEN, which has
+               actions write (inspect/watch GitHub Actions runs), pull-requests write
+               (merge), and issues write (open/close). Just use `gh` normally. Always
+               `git fetch origin && git pull --rebase origin main` before pushing.
+            - WORKFLOW SELF-VALIDATION (MANDATORY - REAL INCIDENT 2026-09-09,
+              fedora-nexus commit ad69ca3): `workflows: write` is NOT a valid
+              key in a workflow's permissions: block (valid set ONLY: actions,
+              artifact-metadata, attestations, checks, contents, deployments,
+              discussions, id-token, issues, models, packages, pages,
+              pull-requests, repository-projects, security-events, statuses,
+              vulnerability-alerts). Adding it rejects the ENTIRE file at
+              parse time and kills every run. After ANY edit to
+              .github/workflows/*, validate with python yaml.safe_load plus a
+              scan that every permissions: key is in the list above - a
+              validation failure blocks the push like a build failure. Never
+              add a permission key from memory; check it against this list.
+            - ISSUE #8 CLOSE-OUT: issue #8 (sync_files wiping gitignored OBS
+              sources) stays OPEN until a pipeline run completes with
+              niri-git sources intact on OBS AND its Tumbleweed build green;
+              then close it with that run linked. If any run re-wipes or TW
+              goes red for missing SOURCES, reopen with the run linked.
             - GIT IDENTITY (MANDATORY - "ONLY opencode-agent[bot], NOTHING ELSE").
               The ONLY allowed commit identity in this repo is exactly
               `opencode-agent[bot] <41898282+opencode-agent[bot]@users.noreply.github.com>`,
