@@ -1,6 +1,14 @@
 Name:           zen-browser
 Version:        1.22b
 Release:        0
+# zen-browser bundles its own Firefox/NSS stack under /usr/lib64/zen-browser.
+# Exclude those private libs from the solver index so they can never satisfy
+# another package's soname Requires (proven 2026-09-09: leaked bundled
+# libnspr4/libnss3 Provides hijacked helium-browser's mozilla-nspr
+# dependency on co-install, leaving helium unable to start).
+# Requires are intentionally NOT excluded: the bundled ELFs' auto-Requires
+# pull in the system libs zen needs at runtime (gtk, X, alsa, ...).
+%global __provides_exclude_from ^/usr/lib64/zen-browser/.*$
 Summary:        Minimal browser focused on privacy and calm browsing
 License:        MPL-2.0
 URL:            https://github.com/zen-browser/desktop
