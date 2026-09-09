@@ -1,2 +1,2 @@
 # Upstream Chromium ships zero-length *.pak.info locale stubs; harmless.
-addFilter("zero-length /opt/helium/locales/.*\\.pak\\.info")
+addFilter("zero-length /opt/helium/locales/.*\.pak\.info")
