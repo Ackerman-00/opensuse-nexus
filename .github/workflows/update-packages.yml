@@ -225,10 +225,24 @@ jobs:
 
             for remote_file in $OBS_FILES; do
               # NEVER delete gitignored source artifacts (tarballs, vendor,
-              # cargo_config, repacked RPMs/AppImages/...) from a package
-              # without _service when the local tree lacks them (issue #8:
-              # sync wiped niri-git TW sources it could not re-upload).
-              if [ ! -f "$pkg/_service" ]; then
+              # cargo_config, repacked RPMs/AppImages/...) when the local tree
+              # lacks them AND the package cannot regenerate them server-side.
+              # A package regenerates sources only via a _service with at least
+              # one ENABLED service. Packages without _service (issue #8: sync
+              # wiped niri-git TW sources it could not re-upload) and packages
+              # whose services are all mode="disabled" (2026-09-09: the same
+              # wipe hit matugen, whose obs_scm/cargo_vendor chain is disabled
+              # and whose tarball+vendor+cargo_config then broke both distros)
+              # would lose their sources permanently - keep the remote copies.
+              regen=0
+              if [ -f "$pkg/_service" ]; then
+                total=$(grep -c '<service ' "$pkg/_service" || true)
+                disabled=$(grep -c 'mode="disabled"' "$pkg/_service" || true)
+                if [ "${total:-0}" -gt "${disabled:-0}" ]; then
+                  regen=1
+                fi
+              fi
+              if [ "$regen" != "1" ]; then
                 case "$remote_file" in
                   *.tar.gz|*.tar.xz|*.tar.bz2|*.tar.zst|cargo_config|vendor*|*.rpm|*.AppImage|*.deb|*.keyring)
                     if [ ! -f "$pkg/$remote_file" ]; then
