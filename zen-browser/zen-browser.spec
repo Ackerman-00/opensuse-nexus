@@ -6,9 +6,14 @@ Release:        0
 # another package's soname Requires (proven 2026-09-09: leaked bundled
 # libnspr4/libnss3 Provides hijacked helium-browser's mozilla-nspr
 # dependency on co-install, leaving helium unable to start).
-# Requires are intentionally NOT excluded: the bundled ELFs' auto-Requires
+# Requires are intentionally NOT path-excluded: the bundled ELFs' auto-Requires
 # pull in the system libs zen needs at runtime (gtk, X, alsa, ...).
+# Only the Firefox-private bundled libs are excluded by SONAME: nothing in
+# the distro provides them (proven 2026-09-09 via rpm -q --whatprovides in a
+# clean TW container) and they resolve at runtime from zen's own directory
+# via $ORIGIN (zen-bin runs in place).
 %global __provides_exclude_from ^/usr/lib64/zen-browser/.*$
+%global __requires_exclude ^lib(gkcodecs|lgpllibs|mozavcodec|mozavutil|mozgtk|mozsandbox|mozsqlite3|mozwayland|clearkey|freeblpriv3)\.so.*$
 Summary:        Minimal browser focused on privacy and calm browsing
 License:        MPL-2.0
 URL:            https://github.com/zen-browser/desktop

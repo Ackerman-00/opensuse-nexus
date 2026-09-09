@@ -1,4 +1,7 @@
 * Wed Sep 09 2026 Ackerman-00 <quietcraft@gmail.com> - 1.22b-0
+- Exclude Firefox-private bundled SONAMEs from Requires (libgkcodecs etc. unresolvable after Provides guard; proven via rpm -q --whatprovides)
+
+* Wed Sep 09 2026 Ackerman-00 <quietcraft@gmail.com> - 1.22b-0
 - Add __provides_exclude_from for bundled Firefox/NSS libs: leaked Provides hijacked other packages soname deps (helium libnspr4 co-install breakage)
 
 * Sat Sep 05 2026 GitHub Actions <actions@github.com> - 1.22b-0
