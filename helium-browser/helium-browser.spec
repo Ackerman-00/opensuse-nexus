@@ -14,6 +14,7 @@ Source0:        https://github.com/imputnet/helium-linux/releases/download/%{ver
 # The official binary tarball does not ship the metainfo file, so pull it
 # from the repo at the matching release tag (all release tags carry it).
 Source1:        https://raw.githubusercontent.com/imputnet/helium-linux/%{version}/package/net.imput.helium.metainfo.xml
+Source2:        helium-browser-rpmlintrc
 BuildRequires:  desktop-file-utils
 BuildRequires:  hicolor-icon-theme
 # Runtime dependencies for the bundled Chromium binary (auto-requires for

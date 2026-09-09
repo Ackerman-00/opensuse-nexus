@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Sep 09 03:00:00 UTC 2026 - opencode-agent[bot] <41898282+opencode-agent[bot]@users.noreply.github.com>
+
+- Add helium-browser-rpmlintrc filtering the harmless upstream
+  zero-length Chromium locale *.pak.info stubs (rpmlint E: zero-length).
+
+-------------------------------------------------------------------
 Wed Sep 09 02:12:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Update to upstream release 0.16.6.1
