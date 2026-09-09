@@ -1,4 +1,7 @@
 * Wed Sep 09 2026 Ackerman-00 <quietcraft@gmail.com> - 1.18.30-0
+- Scope the 3 permissions rpmlint filters to chrome-sandbox (bare-tag form never matched; caused 6 E: unused-filter + raw)
+
+* Wed Sep 09 2026 Ackerman-00 <quietcraft@gmail.com> - 1.18.30-0
 - Update opencode-desktop to v1.18.30
 
 * Sat Sep 05 2026 Ackerman-00 <quietcraft@gmail.com> - 1.18.29-0

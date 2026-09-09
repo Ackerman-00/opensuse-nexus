@@ -1,9 +1,13 @@
+# Electron chrome-sandbox MUST stay setuid-root (mode 4755 via %attr) or the
+# browser sandbox refuses to start; shipped exactly like google-chrome.
+addFilter("permissions-file-setuid-bit /opt/OpenCode/chrome-sandbox")
+# No %set_permissions infrastructure: the mode is fixed at install time via
+# %attr, so the permissions PreReq/post scriptlets have nothing to manage.
+addFilter("permissions-missing-postin .*chrome-sandbox")
+addFilter("permissions-missing-requires missing .permissions. in PreReq")
 addFilter("binary-or-shlib-defines-rpath")
 addFilter("filelist-forbidden-opt")
 addFilter("explicit-lib-dependency")
-addFilter("permissions-file-setuid-bit")
-addFilter("permissions-missing-postin")
-addFilter("permissions-missing-requires")
 addFilter("zero-length")
 addFilter("missing-call-to-setgroups-before-setuid")
 addFilter("invalid-desktopfile")
