@@ -1,4 +1,7 @@
 * Wed Sep 09 2026 Ackerman-00 <quietcraft@gmail.com> - 1.18.30-0
+- Proper permissions integration for setuid chrome-sandbox: Requires(pre) permissions + permissions.d drop-in + %post permctl + drop dead rpmlint filters (tags are BlockedFilters, unwaivable)
+
+* Wed Sep 09 2026 Ackerman-00 <quietcraft@gmail.com> - 1.18.30-0
 - Scope the 3 permissions rpmlint filters to chrome-sandbox (bare-tag form never matched; caused 6 E: unused-filter + raw)
 
 * Wed Sep 09 2026 Ackerman-00 <quietcraft@gmail.com> - 1.18.30-0
