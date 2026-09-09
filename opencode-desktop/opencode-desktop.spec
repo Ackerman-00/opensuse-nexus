@@ -12,9 +12,6 @@ URL:            https://opencode.ai
 Source0:        https://github.com/anomalyco/opencode/releases/download/v%{version}/opencode-desktop-linux-amd64.deb
 Source1:        opencode-desktop-rpmlintrc
 BuildRequires:  python3
-# Guarantees %%set_permissions macro availability at build time (macro file
-# ships in permctl, pulled in via permissions).
-BuildRequires:  permissions
 Requires:       at-spi2-core
 Requires:       libXcomposite1
 Requires:       libXdamage1
@@ -31,10 +28,6 @@ Requires:       libuuid1
 Requires:       libxkbcommon0
 Requires:       ripgrep
 Requires:       xdg-utils
-# chrome-sandbox is setuid-root: the permissions profile below + %%post
-# permctl call satisfy rpmlint's SUIDPermissionsCheck (these tags are in
-# rpmlint's BlockedFilters and can NOT be waived via rpmlintrc).
-Requires(pre):  permissions
 Provides:       opencode = %{version}-%{release}
 Obsoletes:      opencode < %{version}
 ExclusiveArch:  x86_64
@@ -103,15 +96,13 @@ sed -i 's|^Exec=.*|Exec=%{_bindir}/opencode-desktop %U|' \
 sed -i 's|^Exec=.*|Exec=%{_bindir}/opencode-desktop %U|' \
     %{buildroot}%{_datadir}/applications/ai.opencode.desktop.desktop
 
-# Permissions profile for the setuid chrome-sandbox (see Requires(pre)
-# above): rpmlint matches it against the packaged mode/owner and requires
-# the %%post permctl call below.
-install -d -m 0755 %{buildroot}%{_datadir}/permissions/permissions.d
-printf '/opt/OpenCode/chrome-sandbox root:root 4755\n' > \
-    %{buildroot}%{_datadir}/permissions/permissions.d/opencode-desktop
-
-%post
-%set_permissions /opt/OpenCode/chrome-sandbox
+# chrome-sandbox ships 0755 (NOT setuid): rpmlint's SUIDPermissionsCheck tags
+# are in BlockedFilters (unwaivable) and third-party drop-ins can never join
+# the central permissions whitelist, so a setuid sandbox can never be E-clean
+# here. The sandbox still works via unprivileged user namespaces (default on
+# Tumbleweed; same direction as Factory chromium, which ships no setuid
+# helper either). The upstream DEB carries mode 4755, so normalize it.
+chmod 0755 %{buildroot}/opt/OpenCode/chrome-sandbox
 
 %files
 %{_bindir}/opencode-desktop
@@ -122,8 +113,6 @@ printf '/opt/OpenCode/chrome-sandbox root:root 4755\n' > \
 %dir %{_datadir}/icons/hicolor/*/apps
 %{_datadir}/icons/hicolor/*/apps/*
 %{_datadir}/metainfo/*
-%{_datadir}/permissions/permissions.d/opencode-desktop
 /opt/OpenCode/
-%attr(4755, root, root) /opt/OpenCode/chrome-sandbox
 
 %changelog
