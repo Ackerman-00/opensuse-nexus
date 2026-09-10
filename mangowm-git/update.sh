@@ -1,4 +1,8 @@
 #!/bin/bash
+# Always operate in this script's own directory (the workflow pushds here,
+# but a direct `bash mangowm-git/update.sh` from the repo root would otherwise
+# touch the wrong files).
+cd "$(dirname "$0")" || exit 1
 
 SPEC_FILE="mangowm-git.spec"
 CHANGES_FILE="mangowm-git.changes"
