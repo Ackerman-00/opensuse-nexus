@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Sep 10 17:00:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Add upstream version floor sdl3 >= 3.2.0 (src/meson.build) and
+  explicit BuildRequires pkgconfig(gio-unix-2.0) (used by
+  src/meson.build, previously covered only via glib2-devel)
+
+-------------------------------------------------------------------
 Thu Sep 10 16:00:23 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Update to upstream release 0.6.8

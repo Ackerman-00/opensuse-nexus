@@ -27,6 +27,16 @@ if [ -f "$RPM_FILE" ] && [ "$CURRENT_VERSION" = "$VERSION" ]; then
 fi
 
 echo "Downloading RPM..."
+# Stable channel must never package a canary build: upstream sometimes
+# redirects the stable endpoint to canary during channel migrations
+# (observed 2026-09-10: stable -> .../canary/.../Fluxer-Canary-*.rpm
+# while x-fluxer-version still advertised a stable-looking number).
+# Refuse and HOLD instead of shipping canary as stable.
+FINAL_NAME=$(curl -s -D - -o /dev/null -L "$API_URL" 2>/dev/null | grep -i "^content-disposition:" | tail -1 | grep -oiE 'filename="[^"]+"' | tail -1)
+if echo "$FINAL_NAME" | grep -qi canary; then
+    echo "Upstream stable endpoint currently serves a canary build ($FINAL_NAME); holding at $CURRENT_VERSION."
+    exit 0
+fi
 curl -fsSL --retry 3 --connect-timeout 30 -o "$RPM_FILE" "$API_URL" \
     || { echo "RPM download failed; spec left untouched."; exit 1; }
 if ! [ -s "$RPM_FILE" ] || ! rpm -qp "$RPM_FILE" >/dev/null 2>&1; then

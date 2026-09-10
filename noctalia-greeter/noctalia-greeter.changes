@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Sep 10 17:00:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Add missing BuildRequires pkgconfig(libxml-2.0) (new required
+  dependency in upstream 1.5.0 passwordless-sync-policy test)
+
+-------------------------------------------------------------------
 Thu Sep 10 15:59:56 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Update to upstream version 1.5.0

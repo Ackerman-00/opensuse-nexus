@@ -36,9 +36,10 @@ BuildRequires:  pkgconfig(libjxl_threads)
 BuildRequires:  pkgconfig(libpipewire-0.3)
 BuildRequires:  pkgconfig(libqalculate)
 BuildRequires:  pkgconfig(librsvg-2.0)
-BuildRequires:  pkgconfig(libsecret-1)
-BuildRequires:  pkgconfig(libsodium)
+BuildRequires:  pkgconfig(libsecret-1) >= 0.20
+BuildRequires:  pkgconfig(libsodium) >= 1.0.18
 BuildRequires:  pkgconfig(libwebp)
+BuildRequires:  pkgconfig(libwebpdemux)
 BuildRequires:  pkgconfig(libxml-2.0)
 BuildRequires:  pkgconfig(md4c)
 BuildRequires:  pkgconfig(nlohmann_json)
