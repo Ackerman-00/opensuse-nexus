@@ -1,3 +1,6 @@
+* Sat Sep 12 2026 GitHub Actions <actions@github.com> - 1.22.1b-0
+- Update zen-browser to v1.22.1b
+
 * Wed Sep 09 2026 Ackerman-00 <quietcraft@gmail.com> - 1.22b-0
 - Exclude Firefox-private bundled SONAMEs from Requires (libgkcodecs etc. unresolvable after Provides guard; proven via rpm -q --whatprovides)
 
