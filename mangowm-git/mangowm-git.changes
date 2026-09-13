@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Sun Sep 13 12:00:00 UTC 2026 - opencode-agent[bot] <41898282+opencode-agent[bot]@users.noreply.github.com>
+
+- Package new upstream systemd user unit mango-session.target
+  (shipped upstream since e835ca0): fixes "Installed (but unpackaged)
+  file(s) found" build failure.
+
+-------------------------------------------------------------------
 Sun Sep 13 11:15:59 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Nightly sync with upstream main branch (Commit: e7da9db)

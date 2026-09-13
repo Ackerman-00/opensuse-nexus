@@ -83,4 +83,7 @@ bleeding-edge main branch.
 %dir %{_sysconfdir}/mango
 %config(noreplace) %{_sysconfdir}/mango/config.conf
 
+# Systemd user session target (added upstream in e835ca0)
+%{_userunitdir}/mango-session.target
+
 %changelog
