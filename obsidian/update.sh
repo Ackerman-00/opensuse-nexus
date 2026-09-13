@@ -5,10 +5,16 @@ CHANGES_FILE="obsidian.changes"
 GITHUB_REPO="obsidianmd/obsidian-releases"
 PACKAGER="Ackerman-00 <quietcraft@gmail.com>"
 
+# Our packaging format: self-contained Linux AppImages (bundled Electron,
+# no system electron - see issue #9). Both arches are required.
+#   x86_64:  Obsidian-<ver>.AppImage
+#   aarch64: Obsidian-<ver>-arm64.AppImage
+
 echo "🔍 Checking for upstream updates on $GITHUB_REPO..."
 
 # Retry on transient network/API failures so one hiccup does not stub the
 # version and abort the whole update.
+API_RESPONSE=""
 LATEST_TAG=""
 for attempt in 1 2 3; do
     if [ -n "$GITHUB_TOKEN" ]; then
@@ -39,29 +45,55 @@ fi
 
 echo "🚀 Update found: $CURRENT_VER -> $LATEST_VER"
 
-# 0. Download and VERIFY both source tarballs BEFORE touching the spec. A failed
+# Asset guard (issue #9 HOLD pattern): if the new release ships no Linux
+# assets for our packaging format, SKIP it cleanly (exit 0, spec untouched).
+# Real case: v1.13.8 shipped only Obsidian-1.13.8.apk (Android) - no
+# AppImage/tarball/deb, so there is nothing Linux to package. A blind bump
+# would break the build and wipe good OBS sources.
+ASSET_NAMES=$(echo "$API_RESPONSE" | jq -r '.assets[]?.name // empty')
+if [ -z "$ASSET_NAMES" ]; then
+    echo "⚠️  Could not list release assets; refusing to bump blind. Spec left untouched (HOLD)."
+    exit 0
+fi
+echo "   Release assets:"
+echo "$ASSET_NAMES" | sed 's/^/     - /'
+
+X86_APPIMAGE="Obsidian-$LATEST_VER.AppImage"
+ARM_APPIMAGE="Obsidian-$LATEST_VER-arm64.AppImage"
+
+if ! echo "$ASSET_NAMES" | grep -qx "$X86_APPIMAGE"; then
+    echo "⏸️  HOLD: $LATEST_TAG has no Linux x86_64 AppImage ($X86_APPIMAGE missing - e.g. APK-only mobile release). Spec stays on $CURRENT_VER."
+    exit 0
+fi
+if ! echo "$ASSET_NAMES" | grep -qx "$ARM_APPIMAGE"; then
+    echo "⏸️  HOLD: $LATEST_TAG has no Linux aarch64 AppImage ($ARM_APPIMAGE missing). Spec stays on $CURRENT_VER."
+    exit 0
+fi
+echo "✅ Both Linux AppImage assets present; proceeding."
+
+# 0. Download and VERIFY both AppImages BEFORE touching the spec. A failed
 #    or error-stubbed download (e.g. rate-limited HTML page) must NOT bump the
 #    version or reach OBS - otherwise the sync step uploads a stub and deletes
-#    the previous good tarball, breaking the build.
-echo "📦 Downloading source tarballs..."
-rm -f obsidian-*.tar.gz
+#    the previous good sources, breaking the build.
+echo "📦 Downloading AppImage sources..."
+rm -f Obsidian-*.AppImage
 
-X86_URL="https://github.com/$GITHUB_REPO/releases/download/$LATEST_TAG/obsidian-$LATEST_VER.tar.gz"
-ARM_URL="https://github.com/$GITHUB_REPO/releases/download/$LATEST_TAG/obsidian-$LATEST_VER-arm64.tar.gz"
+X86_URL="https://github.com/$GITHUB_REPO/releases/download/$LATEST_TAG/$X86_APPIMAGE"
+ARM_URL="https://github.com/$GITHUB_REPO/releases/download/$LATEST_TAG/$ARM_APPIMAGE"
 
-curl -fsSL --retry 3 --connect-timeout 20 "$X86_URL" -o "obsidian-$LATEST_VER.tar.gz" \
-    || { echo "❌ x86_64 tarball download failed; OBS sources left untouched."; exit 1; }
-curl -fsSL --retry 3 --connect-timeout 20 "$ARM_URL" -o "obsidian-$LATEST_VER-arm64.tar.gz" \
-    || { echo "❌ arm64 tarball download failed; OBS sources left untouched."; exit 1; }
+curl -fsSL --retry 3 --connect-timeout 20 "$X86_URL" -o "$X86_APPIMAGE" \
+    || { echo "❌ x86_64 AppImage download failed; OBS sources left untouched."; exit 1; }
+curl -fsSL --retry 3 --connect-timeout 20 "$ARM_URL" -o "$ARM_APPIMAGE" \
+    || { echo "❌ arm64 AppImage download failed; OBS sources left untouched."; exit 1; }
 
-# Verify both files are real gzip tarballs (not HTML error stubs) before use.
-for f in "obsidian-$LATEST_VER.tar.gz" "obsidian-$LATEST_VER-arm64.tar.gz"; do
-    if ! [ -s "$f" ] || ! tar -tzf "$f" > /dev/null 2>&1; then
-        echo "❌ $f is missing, empty, or not a valid tarball; OBS sources left untouched."
+# Verify both files are real AppImages (ELF) before use.
+for f in "$X86_APPIMAGE" "$ARM_APPIMAGE"; do
+    if ! [ -s "$f" ] || ! head -c4 "$f" | grep -q $'\x7fELF'; then
+        echo "❌ $f is missing, empty, or not an ELF AppImage; OBS sources left untouched."
         exit 1
     fi
 done
-echo "✅ Both tarballs verified (x86_64 $(du -h "obsidian-$LATEST_VER.tar.gz" | cut -f1), arm64 $(du -h "obsidian-$LATEST_VER-arm64.tar.gz" | cut -f1))."
+echo "✅ Both AppImages verified (x86_64 $(du -h "$X86_APPIMAGE" | cut -f1), arm64 $(du -h "$ARM_APPIMAGE" | cut -f1))."
 
 # 1. Update the spec file
 sed -i -E "s/^Version:.*/Version:        $LATEST_VER/" "$SPEC_FILE"
@@ -70,7 +102,7 @@ sed -i -E "s/^Release:.*/Release:        0/" "$SPEC_FILE"
 # 2. Generate OBS Changes File
 echo "📝 Generating OBS changes file..."
 FORMATTED_DATE=$(LC_ALL=C date +"%a %b %d %T UTC %Y")
-NEW_CHANGELOG_ENTRY="-------------------------------------------------------------------\n$FORMATTED_DATE - $PACKAGER\n\n- Update to upstream version $LATEST_VER\n- Switch to native system Electron dependency\n\n"
+NEW_CHANGELOG_ENTRY="-------------------------------------------------------------------\n$FORMATTED_DATE - $PACKAGER\n\n- Update to upstream version $LATEST_VER (bundled Electron AppImage)\n\n"
 
 if [ -f "$CHANGES_FILE" ]; then
     echo -e "$NEW_CHANGELOG_ENTRY$(cat $CHANGES_FILE)" > "$CHANGES_FILE"
