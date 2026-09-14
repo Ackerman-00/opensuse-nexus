@@ -7,26 +7,44 @@ PACKAGER="Ackerman-00 <quietcraft@gmail.com>"
 
 echo "Checking for upstream updates on $GITHUB_REPO..."
 
-LATEST_TAG=$(git ls-remote --tags https://github.com/$GITHUB_REPO.git 2>/dev/null | awk '{print $2}' | sed 's|refs/tags/||;s/\^{}//' | grep -E '^v?[0-9]' | sort -V | tail -1)
-LATEST_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
+# Candidate tags newest-first. Upstream sometimes pushes bare tags (e.g. the
+# v2.0.x series, which have no GitHub release object and no desktop DEB
+# asset). Walk down until a tag whose desktop DEB asset actually exists, so a
+# stray asset-less tag can never pin us stale or ship a 404 spec.
+ALL_TAGS=$(git ls-remote --tags https://github.com/$GITHUB_REPO.git 2>/dev/null | awk '{print $2}' | sed 's|refs/tags/||;s/\^{}//' | grep -E '^v?[0-9]' | sort -uV -r)
 
-if [ -z "$LATEST_VERSION" ]; then
-    echo "Error: Failed to fetch latest tag."
+if [ -z "$ALL_TAGS" ]; then
+    echo "Error: Failed to fetch tags."
     exit 1
 fi
 
 CURRENT_VERSION=$(grep -E "^Version:" "$SPEC_FILE" | awk '{print $2}')
 
-if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
-    echo "Package is already at $LATEST_VERSION. No update needed."
+LATEST_VERSION=""
+for TAG in $ALL_TAGS; do
+    CANDIDATE=$(echo "$TAG" | sed 's/^v//')
+    if [ "$CANDIDATE" = "$CURRENT_VERSION" ]; then
+        echo "Package is already at $CANDIDATE. No update needed."
+        exit 0
+    fi
+    SOURCE_URL="https://github.com/$GITHUB_REPO/releases/download/v$CANDIDATE/opencode-desktop-linux-amd64.deb"
+    HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 30 "$SOURCE_URL")
+    if [ "$HTTP_CODE" = "200" ]; then
+        LATEST_VERSION="$CANDIDATE"
+        break
+    fi
+    echo "Tag v$CANDIDATE has no desktop DEB asset (HTTP $HTTP_CODE); trying older tag..."
+done
+
+if [ -z "$LATEST_VERSION" ]; then
+    echo "No newer tag with a desktop DEB asset found; staying on $CURRENT_VERSION."
     exit 0
 fi
 
 echo "Update found: $CURRENT_VERSION -> $LATEST_VERSION"
 
-# Defensive check: the DEB asset must actually exist before we bump from a
-# git tag (upstream frequently tags releases while the desktop DEB asset is
-# still uploading, which would ship a spec pointing at a 404).
+# Defensive check: the DEB asset must actually exist before we bump (already
+# proven 200 above; re-verify cheaply to close any TOCTOU gap).
 SOURCE_URL="https://github.com/$GITHUB_REPO/releases/download/v$LATEST_VERSION/opencode-desktop-linux-amd64.deb"
 HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 30 "$SOURCE_URL")
 if [ "$HTTP_CODE" != "200" ]; then
