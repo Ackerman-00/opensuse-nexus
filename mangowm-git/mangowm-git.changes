@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Sep 16 04:55:00 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
+
+- Add explicit BuildRequires: pkgconfig(xcb-randr) (upstream
+  meson.build declares dependency('xcb-randr', required: xwayland);
+  previously satisfied only transitively via libxcb-devel)
+
+-------------------------------------------------------------------
 Wed Sep 16 03:46:31 UTC 2026 - Ackerman-00 <quietcraft@gmail.com>
 
 - Nightly sync with upstream main branch (Commit: 0952769)

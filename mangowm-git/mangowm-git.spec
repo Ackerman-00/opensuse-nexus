@@ -36,6 +36,7 @@ BuildRequires:  pkgconfig(wlroots-0.20) >= 0.20.0
 # XWayland support
 BuildRequires:  pkgconfig(xcb)
 BuildRequires:  pkgconfig(xcb-icccm)
+BuildRequires:  pkgconfig(xcb-randr)
 BuildRequires:  pkgconfig(xkbcommon)
 Requires:       Mesa-dri
 Requires:       Mesa-libEGL1
