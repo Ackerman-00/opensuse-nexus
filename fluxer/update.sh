@@ -12,7 +12,17 @@ RPM_FILE="fluxer.rpm"
 
 echo "Checking for fluxer updates..."
 
-VERSION=$(curl -s -D - -o /dev/null -L "$API_URL" 2>/dev/null | grep -i "^X-Fluxer-Version:" | awk '{print $2}' | tr -d '\r')
+# The X-Fluxer-Version header on the 302 sometimes lags the artifact actually
+# served (observed 2026-09-20: header advertised 2026.920.41250 while the
+# served stable RPM was fluxer-2026.920.41303). The Content-Disposition
+# filename of the served RPM is authoritative — prefer it when they differ.
+HEADER=$(curl -s -D - -o /dev/null -L "$API_URL" 2>/dev/null)
+VERSION=$(echo "$HEADER" | grep -i "^X-Fluxer-Version:" | awk '{print $2}' | tr -d '\r')
+DISP_VERSION=$(echo "$HEADER" | grep -i "content-disposition:" | grep -oiP 'Fluxer-\K[0-9.]+' | tail -1)
+if [ -n "$DISP_VERSION" ] && [ "$DISP_VERSION" != "$VERSION" ]; then
+    echo "Note: X-Fluxer-Version=$VERSION vs served filename=$DISP_VERSION, using $DISP_VERSION (filename authoritative)."
+    VERSION="$DISP_VERSION"
+fi
 
 if [ -z "$VERSION" ]; then
     echo "Error: Failed to fetch upstream version."

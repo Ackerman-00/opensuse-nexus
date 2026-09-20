@@ -1,3 +1,6 @@
+* Sun Sep 20 2026 Ackerman-00 <quietcraft@gmail.com> - 2026.920.41303-0
+- Update fluxer to v2026.920.41303
+
 * Sun Sep 20 2026 Ackerman-00 <quietcraft@gmail.com> - 2026.920.41250-0
 - Update fluxer to v2026.920.41250
 - Fix rpmlint errors: soname Requires for libXtst/libuuid,
