@@ -15,8 +15,10 @@ Source1:        fluxer-rpmlintrc
 BuildRequires:  cpio
 BuildRequires:  hicolor-icon-theme
 # Runtime dependencies for the bundled Electron/Chromium runtime
+# (no runtime Requires: hicolor-icon-theme: unversioned branding dep trips
+# rpmlint branding-requires-unversioned; icon dirs are created by our own
+# %dir entries, same pattern as helium-browser which is rpmlint-clean)
 Requires:       at-spi2-core
-Requires:       hicolor-icon-theme
 Requires:       libX11.so.6()(64bit)
 Requires:       libXcomposite.so.1()(64bit)
 Requires:       libXdamage.so.1()(64bit)
@@ -24,7 +26,7 @@ Requires:       libXext.so.6()(64bit)
 Requires:       libXfixes.so.3()(64bit)
 Requires:       libXrandr.so.2()(64bit)
 Requires:       libXss.so.1()(64bit)
-Requires:       libXtst6
+Requires:       libXtst.so.6()(64bit)
 Requires:       libasound.so.2()(64bit)
 Requires:       libatk-1.0.so.0()(64bit)
 Requires:       libatk-bridge-2.0.so.0()(64bit)
@@ -45,7 +47,7 @@ Requires:       libnssutil3.so()(64bit)
 Requires:       libpango-1.0.so.0()(64bit)
 Requires:       libsmime3.so()(64bit)
 Requires:       libudev.so.1()(64bit)
-Requires:       libuuid1
+Requires:       libuuid.so.1()(64bit)
 Requires:       libxcb.so.1()(64bit)
 Requires:       libxkbcommon.so.0()(64bit)
 Requires:       xdg-utils

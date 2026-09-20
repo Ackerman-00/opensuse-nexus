@@ -1,5 +1,8 @@
 * Sun Sep 20 2026 Ackerman-00 <quietcraft@gmail.com> - 2026.920.41250-0
 - Update fluxer to v2026.920.41250
+- Fix rpmlint errors: soname Requires for libXtst/libuuid,
+  drop unversioned hicolor-icon-theme runtime dep (helium pattern),
+  remove unused rpmlintrc filter
 
 * Sun Sep 20 2026 Ackerman-00 <quietcraft@gmail.com> - 2026.920.31043-0
 - Update fluxer to v2026.920.31043

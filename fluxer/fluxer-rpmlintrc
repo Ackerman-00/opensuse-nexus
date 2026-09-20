@@ -1,2 +1,3 @@
-addFilter("devel-file-in-non-devel-package")
+# devel-file-in-non-devel-package filter removed 2026-09-20: unused
+# (rpmlint E: unused-rpmlintrc-filter); bundled .node files no longer trip it.
 addFilter("invalid-desktopfile")
