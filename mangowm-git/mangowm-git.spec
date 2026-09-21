@@ -1,7 +1,7 @@
 # These will be automatically populated by update.sh
-%global commit          9ae4bad4b8fa97665233946a49e386d334c46b6e
-%global shortcommit     9ae4bad
-%global gitdate         20260921112408
+%global commit          999a546fd22cd7faef665f340d793f8d068d7255
+%global shortcommit     999a546
+%global gitdate         20260921162236
 %global pkg_name        mangowm
 %global src_name        mango
 Name:           %{pkg_name}-git
