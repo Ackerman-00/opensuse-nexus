@@ -1,3 +1,8 @@
+* Mon Sep 21 2026 opencode-agent[bot] <41898282+opencode-agent[bot]@users.noreply.github.com> - 1.6.7-0
+- Drop unversioned runtime Requires: hicolor-icon-theme (tripped rpmlint
+  E: branding-requires-unversioned on the built RPM); own the icon dirs
+  via %dir entries instead, same pattern as fluxer/helium-browser
+
 * Tue Aug 18 2026 GitHub Actions <actions@github.com> - 1.6.7-0
 - Update vesktop to v1.6.7
 

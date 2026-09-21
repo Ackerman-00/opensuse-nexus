@@ -18,7 +18,6 @@ BuildRequires:  hicolor-icon-theme
 BuildRequires:  update-desktop-files
 # Runtime dependencies for the bundled Electron/Chromium runtime
 Requires:       at-spi2-core
-Requires:       hicolor-icon-theme
 Requires:       libX11.so.6()(64bit)
 Requires:       libXcomposite.so.1()(64bit)
 Requires:       libXdamage.so.1()(64bit)
@@ -95,6 +94,9 @@ chmod 0755 %{buildroot}%{_bindir}/vesktop
 %files
 %{_bindir}/vesktop
 %{_datadir}/applications/vesktop.desktop
+%dir %{_datadir}/icons/hicolor
+%dir %{_datadir}/icons/hicolor/*
+%dir %{_datadir}/icons/hicolor/*/apps
 %{_datadir}/icons/hicolor/*/apps/*.*
 %dir /opt/Vesktop
 %exclude /opt/Vesktop/chrome-sandbox
