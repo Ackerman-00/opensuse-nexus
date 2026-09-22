@@ -1,11 +1,11 @@
 # These will be automatically populated by update.sh
-%global commit          94fd551e0e5ab64164c8c8beaa7768e67e471c4f
-%global shortcommit     94fd551
-%global gitdate         20260921235822
+%global commit          f5b77adb6240de046b680bf04bb0901a9ed3a7fa
+%global shortcommit     f5b77ad
+%global gitdate         20260922065158
 %global pkg_name        mangowm
 %global src_name        mango
 Name:           %{pkg_name}-git
-Version:        0.17.2+git%{gitdate}.%{shortcommit}
+Version:        0.17.3+git%{gitdate}.%{shortcommit}
 Release:        0
 Summary:        A scrollable-tiling Wayland compositor (Nexus Optimized)
 License:        MIT
