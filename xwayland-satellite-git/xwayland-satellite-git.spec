@@ -1,9 +1,9 @@
 # These will be automatically populated by update.sh
-%global commit          5274bdce3dd96c922c73b00276b2a628356e7f2b
-%global shortcommit     5274bdc
-%global gitdate         20260924031557
+%global commit          b83eab900644e4c7c77982ce3d44cb490f0c5e1d
+%global shortcommit     b83eab9
+%global gitdate         20260924051409
 Name:           xwayland-satellite-git
-Version:        0.8.2+git%{gitdate}.%{shortcommit}
+Version:        0.8.3+git%{gitdate}.%{shortcommit}
 Release:        0
 Summary:        Rootless Xwayland integration for Wayland compositors (Nexus Optimized)
 License:        MPL-2.0
