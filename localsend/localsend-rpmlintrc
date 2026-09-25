@@ -1,6 +1,6 @@
 addFilter("binary-or-shlib-defines-rpath")
-addFilter("arch-dependent-file-in-usr-share")
-addFilter("explicit-lib-dependency")
 addFilter("invalid-desktopfile")
 addFilter("missing-hash-section")
 addFilter("shared-library-not-executable")
+# Prebuilt Flutter bundle installs under /opt by design (same class as helium-browser /opt).
+addFilter("filelist-forbidden-opt /opt/localsend_app")
