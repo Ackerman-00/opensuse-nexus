@@ -1,7 +1,7 @@
 # These will be automatically populated by update.sh
-%global commit          b83eab900644e4c7c77982ce3d44cb490f0c5e1d
-%global shortcommit     b83eab9
-%global gitdate         20260924051409
+%global commit          63cdf17f17b4ee231ef862690048549f218e8e0e
+%global shortcommit     63cdf17
+%global gitdate         20260925130202
 Name:           xwayland-satellite-git
 Version:        0.8.3+git%{gitdate}.%{shortcommit}
 Release:        0
